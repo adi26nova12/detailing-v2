@@ -1,5 +1,5 @@
 /* ============================================================================
-   APEX — utilities
+   Studio X Detailing — utilities
    ========================================================================== */
 (function (w) {
   'use strict';
@@ -45,6 +45,16 @@
       y: (dstH - h2) * (oy === undefined ? 0.5 : oy),
       w: w2, h: h2
     };
+  };
+
+  /* Every canvas that draws a baked frame composes the studio-wide paint
+     regrade (APEX.paint.filter) with whatever local grade it wanted. Order
+     matters: the regrade runs first so a local `saturate()` acts on the red
+     car rather than on the emerald one underneath it. */
+  U.paintFilter = function (local) {
+    const base = (w.APEX && w.APEX.paint && w.APEX.paint.filter) || '';
+    if (!base) return local || '';
+    return local ? base + ' ' + local : base;
   };
 
   /* SplitText is on the free CDN now, but never let a blocked script take the
@@ -98,7 +108,7 @@
     el.addEventListener('mouseleave', leave);
   };
 
-  /* Number formatting for the stat counters and the inspection readout. */
+  /* Number formatting for the stat counters. */
   U.fmt = (v, decimals) => decimals ? v.toFixed(decimals) : Math.round(v).toLocaleString('en-AU');
 
   w.APEX_U = U;

@@ -1,5 +1,5 @@
 /* ============================================================================
-   APEX — scene choreography
+   Studio X Detailing — scene choreography
 
    Every scene is either a scrubbed timeline or a deterministic onUpdate. No
    scene holds state that depends on the direction of travel, which is what
@@ -56,8 +56,26 @@
     lines.forEach(function (el) { chars.push.apply(chars, U.split(el, 'chars').chars); });
     g.set(chars, { yPercent: 118, opacity: 0 });
 
+    /* The section is a viewport taller than the film needs. That last
+       viewport is the overlap the turntable dissolves across: the sticky
+       stage is still stuck through it, holding frame 419, instead of
+       scrolling up out of the way — a stage sliding upward behind a
+       cross-fade is the one thing that gives the cut away.
+
+       So the scrub ends a viewport early rather than at `bottom bottom`, and
+       the figure is derived from the same numbers the CSS uses so the two
+       cannot drift apart. */
+    function heroSpan() {
+      const svc = document.getElementById('services');
+      // end exactly where the next section's box begins — that is where the
+      // dissolve starts, and the film has to be finished by then
+      const top = svc ? svc.getBoundingClientRect().top + w.scrollY : 0;
+      return Math.max(1, Math.round(top));
+    }
+
     const trigger = {
-      trigger: '#hero', start: 'top top', end: 'bottom bottom',
+      trigger: '#hero', start: 'top top',
+      end: function () { return '+=' + heroSpan(); },
       scrub: 0.6, invalidateOnRefresh: true
     };
 
@@ -97,212 +115,30 @@
   };
 
   /* ══════════════════════════════════════════════════════════════════════
-     SCENE 4 · interactive paint inspection
-     ═══════════════════════════════════════════════════════════════════ */
-  Scenes.inspect = function (seq) {
-    const plate = new w.APEX_Plate(document.getElementById('inspectPlate'), seq);
-    const fx    = document.getElementById('inspectFx');
-    const ctx   = fx.getContext('2d');
-    const items = Array.from(document.querySelectorAll('#inspectReadout li'));
-
-    plate.set(C.stills.inspect, { zoom: 1.18 });
-
-    /* Contamination is stored in a coarse buffer that the pointer erases.
-       The readout is derived from it, so the numbers are the interaction
-       rather than a decoration sitting next to it. */
-    const GRID = 64;
-    const dirt = new Float32Array(GRID * GRID).fill(1);
-    let cleared = 0;
-
-    const pointer = { x: -9999, y: -9999, tx: -9999, ty: -9999, inside: false };
-    let W = 0, H = 0, live = false;
-
-    function resize() {
-      const r = fx.getBoundingClientRect();
-      W = r.width; H = r.height;
-      U.sizeCanvas(fx, W, H);
-      plate.resize();
-    }
-
-    /* Holographic motes: a slow field that wakes up near the pointer. */
-    const MOTES = 190;
-    const motes = [];
-    for (let i = 0; i < MOTES; i++) {
-      motes.push({
-        u: Math.random(), v: Math.random(),
-        p: Math.random() * Math.PI * 2, s: 0.4 + Math.random() * 1.5
-      });
-    }
-
-    function draw(time) {
-      if (!live || !W) return;
-      const d = U.dpr();
-      ctx.setTransform(d, 0, 0, d, 0, 0);
-      ctx.clearRect(0, 0, W, H);
-
-      // pointer inertia — the reveal has mass, so it trails the cursor
-      pointer.x += (pointer.tx - pointer.x) * 0.14;
-      pointer.y += (pointer.ty - pointer.y) * 0.14;
-
-      const R = Math.min(W, H) * 0.26;
-
-      if (pointer.inside) {
-        // erase contamination under the reveal
-        const gx = U.clamp(Math.floor(pointer.x / W * GRID), 0, GRID - 1);
-        const gy = U.clamp(Math.floor(pointer.y / H * GRID), 0, GRID - 1);
-        const gr = Math.ceil(R / Math.max(W, H) * GRID);
-        for (let y = gy - gr; y <= gy + gr; y++) {
-          if (y < 0 || y >= GRID) continue;
-          for (let x = gx - gr; x <= gx + gr; x++) {
-            if (x < 0 || x >= GRID) continue;
-            const dd = Math.hypot(x - gx, y - gy) / (gr || 1);
-            if (dd > 1) continue;
-            const k = y * GRID + x;
-            const was = dirt[k];
-            dirt[k] = Math.max(0, was - (1 - dd) * 0.09);
-            cleared += (was - dirt[k]);
-          }
-        }
-      }
-
-      // swirl marks still present, drawn as short arcs weighted by the buffer
-      ctx.lineWidth = 1;
-      const cellW = W / GRID, cellH = H / GRID;
-      for (let y = 0; y < GRID; y += 2) {
-        for (let x = 0; x < GRID; x += 2) {
-          const v = dirt[y * GRID + x];
-          if (v < 0.04) continue;
-          const px = x * cellW, py = y * cellH;
-          const dist = Math.hypot(px - pointer.x, py - pointer.y);
-          if (dist > R * 1.35) continue;
-          const a = v * 0.38 * (1 - dist / (R * 1.35));
-          ctx.strokeStyle = 'rgba(214,232,226,' + a.toFixed(3) + ')';
-          ctx.beginPath();
-          ctx.arc(px, py, 5 + (x % 5) * 2.2, (x + y) * 0.7, (x + y) * 0.7 + 1.5);
-          ctx.stroke();
-        }
-      }
-
-      // the reveal ring itself
-      if (pointer.inside) {
-        const ring = ctx.createRadialGradient(pointer.x, pointer.y, R * 0.05, pointer.x, pointer.y, R);
-        ring.addColorStop(0, 'rgba(47,214,148,0.22)');
-        ring.addColorStop(0.62, 'rgba(47,214,148,0.10)');
-        ring.addColorStop(1, 'rgba(47,214,148,0)');
-        ctx.fillStyle = ring;
-        ctx.fillRect(0, 0, W, H);
-
-        ctx.strokeStyle = 'rgba(72,232,168,0.62)';
-        ctx.lineWidth = 1.4;
-        ctx.beginPath(); ctx.arc(pointer.x, pointer.y, R * 0.92, 0, Math.PI * 2); ctx.stroke();
-
-        ctx.strokeStyle = 'rgba(235,255,248,0.24)';
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.arc(pointer.x, pointer.y, R * 0.44, 0, Math.PI * 2); ctx.stroke();
-
-        // crosshair ticks, rotating slowly
-        const rot = time * 0.15;
-        ctx.strokeStyle = 'rgba(235,255,248,0.55)';
-        ctx.lineWidth = 1.4;
-        for (let i = 0; i < 4; i++) {
-          const a = rot + i * Math.PI / 2;
-          ctx.beginPath();
-          ctx.moveTo(pointer.x + Math.cos(a) * R * 0.82, pointer.y + Math.sin(a) * R * 0.82);
-          ctx.lineTo(pointer.x + Math.cos(a) * R * 1.02, pointer.y + Math.sin(a) * R * 1.02);
-          ctx.stroke();
-        }
-      }
-
-      // motes drifting in the beam
-      for (let i = 0; i < MOTES; i++) {
-        const m = motes[i];
-        const px = m.u * W + Math.sin(time * 0.22 + m.p) * 16;
-        const py = m.v * H + Math.cos(time * 0.17 + m.p * 1.7) * 12;
-        const dist = Math.hypot(px - pointer.x, py - pointer.y);
-        const near = pointer.inside ? U.clamp(1 - dist / R, 0, 1) : 0;
-        const a = 0.13 + near * 0.72;
-        ctx.fillStyle = near > 0.02
-          ? 'rgba(96,236,178,' + a.toFixed(3) + ')'
-          : 'rgba(190,202,208,' + (a * 0.55).toFixed(3) + ')';
-        const s = m.s * (1 + near * 2.1);
-        ctx.fillRect(px, py, s, s);
-      }
-    }
-
-    /* Readout values: five settle as the surface is analysed, contamination
-       and swirl fall as the buffer is cleared. */
-    const state = {};
-    items.forEach(function (li) { state[li.dataset.metric] = 0; });
-
-    function paintReadout() {
-      const frac = U.clamp(cleared / (GRID * GRID * 0.55), 0, 1);
-      items.forEach(function (li) {
-        const key = li.dataset.metric;
-        const cfg = C.metrics[key];
-        let v;
-        if (key === 'contam')      v = U.lerp(38, 0, frac);
-        else if (key === 'swirl')  v = U.lerp(9400, 0, frac);
-        else                       v = state[key];
-        li.querySelector('b').textContent = U.fmt(v, cfg.decimals);
-      });
-    }
-
-    ST.create({
-      trigger: '#inspect', start: 'top 80%', once: true,
-      onEnter: function () {
-        Object.keys(C.metrics).forEach(function (key, i) {
-          if (key === 'contam' || key === 'swirl') return;
-          g.to(state, {
-            [key]: C.metrics[key].to, duration: 1.9, delay: i * 0.09,
-            ease: E.mech, onUpdate: paintReadout
-          });
-        });
-      }
-    });
-
-    ST.create({
-      trigger: '#inspect', start: 'top bottom', end: 'bottom top',
-      onToggle: function (self) { live = self.isActive; }
-    });
-
-    /* Slow push while the section is pinned. */
-    g.to(plate.opt, {
-      zoom: 1.42, ease: 'none',
-      scrollTrigger: { trigger: '#inspect', start: 'top top', end: 'bottom bottom', scrub: 0.8 },
-      onUpdate: function () { plate.render(); }
-    });
-
-    fx.parentElement.addEventListener('mousemove', function (e) {
-      const r = fx.getBoundingClientRect();
-      pointer.tx = e.clientX - r.left;
-      pointer.ty = e.clientY - r.top;
-      if (!pointer.inside) { pointer.x = pointer.tx; pointer.y = pointer.ty; }
-      pointer.inside = true;
-    });
-    fx.parentElement.addEventListener('mouseleave', function () { pointer.inside = false; });
-
-    resize();
-    paintReadout();
-    w.addEventListener('resize', resize);
-    addLoop(function (t) { draw(t); paintReadout(); });
-  };
-
-  /* ══════════════════════════════════════════════════════════════════════
-     SCENE 5 · the turntable
+     SCENE 4 · the turntable
 
      A locked-off camera; the car rotates counter-clockwise through one full
      revolution as the section scrolls. The service menu populates down the
      left, one line at a time, and each line brings its own effect over the
      paint. Everything is a pure function of scroll position, so the whole
      section plays as one continuous move and reverses exactly.
+
+     The section's box starts one viewport before the hero ends (a negative
+     margin in the CSS), and its stage dissolves up over the hero across that
+     overlap. Both stages are sticky at top:0 and a full viewport tall, so
+     nothing slides — the opening film cross-fades into the turntable. The
+     dissolve is smoothstep(prog), like everything else here, so scrolling
+     back up fades the hero straight back in.
      ═══════════════════════════════════════════════════════════════════ */
   Scenes.services = function (turnSeq, holoSeq) {
+    const stage  = document.querySelector('.services__stage');
     const plate  = new w.APEX_Plate(document.getElementById('servicePlate'), turnSeq);
     const fx     = document.getElementById('serviceFx');
     const ctx    = fx.getContext('2d');
     const holoEl = document.getElementById('serviceHolo');
     const hctx   = holoEl.getContext('2d');
     const film   = document.getElementById('serviceFilm');
+    const cabin  = document.getElementById('serviceCabin');
     const items  = Array.from(document.querySelectorAll('.svc-item'));
     const rules  = items.map(function (li) { return li.querySelector('.svc-item__rule'); });
     const N      = items.length;
@@ -311,10 +147,36 @@
     let W = 0, H = 0, live = false;
     let prog = 0;                                  // 0 → 1 across the section
 
-    /* Each line owns a slice of the scroll. `arrive` is where it lands;
-       once landed it stays — the menu accumulates rather than cycling. */
-    const SLICE = 0.165;
-    function arriveAt(i) { return 0.03 + i * SLICE; }
+    /* How much of this section's scroll is spent dissolving up over the hero.
+       Measured rather than hard-coded: the overlap is exactly one viewport,
+       and the section scrubs across (its height − one viewport), so the
+       fraction falls out of the two. Reduced motion drops the overlap in the
+       CSS, so it takes no dissolve here either. */
+    const SECTION = document.getElementById('services');
+    let DISS = 0;
+    function measureDissolve() {
+      if (U.reducedMotion) { DISS = 0; return; }
+      const span = SECTION.offsetHeight - w.innerHeight;
+      DISS = span > 0 ? U.clamp(w.innerHeight / span, 0, 0.34) : 0;
+    }
+    measureDissolve();
+
+    /* Each line owns a slice of what is left once the dissolve is done.
+       `arrive` is where it lands; once landed it stays — the menu accumulates
+       rather than cycling. Derived from the line count so adding or removing a
+       service keeps the last line landing well before the section ends. */
+    function head()  { return DISS + 0.03; }
+    function slice() { return (0.89 - head()) / N; }
+    function arriveAt(i) { return head() + i * slice(); }
+
+    /* `film` and `cabin` are DOM layers, not canvas effects, so they are
+       driven from whichever line claims that mood rather than a fixed index. */
+    function indexOfMood(mood) {
+      for (let i = 0; i < C.services.length; i++) if (C.services[i].mood === mood) return i;
+      return -1;
+    }
+    const FILM_I  = indexOfMood('film');
+    const CABIN_I = indexOfMood('cabin');
 
     function appearOf(i) {
       return U.smoothstep(arriveAt(i), arriveAt(i) + 0.13, prog);
@@ -383,8 +245,8 @@
       hctx.globalCompositeOperation = 'source-over';
 
       const edge = hctx.createLinearGradient(x - 22, 0, x + 8, 0);
-      edge.addColorStop(0, 'rgba(47,214,148,0)');
-      edge.addColorStop(0.8, 'rgba(120,255,200,0.5)');
+      edge.addColorStop(0, 'rgba(230,57,77,0)');
+      edge.addColorStop(0.8, 'rgba(255,138,150,0.5)');
       edge.addColorStop(1, 'rgba(255,255,255,0)');
       hctx.fillStyle = edge;
       hctx.fillRect(x - 22, r.y, 30, r.h);
@@ -433,7 +295,7 @@
         const v = S.cy + Math.sin(a) * rr * S.ry * 1.25;
         const fade = remain * (0.16 + 0.14 * Math.sin(i + t)) * onBody(u, v);
         if (fade < 0.004) continue;
-        ctx.strokeStyle = 'rgba(215,232,226,' + fade.toFixed(3) + ')';
+        ctx.strokeStyle = 'rgba(233,223,225,' + fade.toFixed(3) + ')';
         ctx.beginPath();
         ctx.arc(PX(u), PY(v), 6 + (i % 7) * 2.4, a, a + 1.3);
         ctx.stroke();
@@ -460,8 +322,8 @@
 
         const gr = ctx.createRadialGradient(px - r * 0.3, py - r * 0.35, r * 0.05, px, py, r);
         gr.addColorStop(0, 'rgba(255,255,255,' + (alpha * 0.75).toFixed(3) + ')');
-        gr.addColorStop(0.45, 'rgba(180,225,210,' + (alpha * 0.16).toFixed(3) + ')');
-        gr.addColorStop(1, 'rgba(120,190,170,0)');
+        gr.addColorStop(0.45, 'rgba(228,186,192,' + (alpha * 0.16).toFixed(3) + ')');
+        gr.addColorStop(1, 'rgba(190,130,140,0)');
         ctx.fillStyle = gr;
         ctx.beginPath(); ctx.arc(px, py, r, 0, 6.2832); ctx.fill();
 
@@ -484,9 +346,9 @@
       const x = U.lerp(x0, x1, sweep);
 
       const g1 = ctx.createLinearGradient(x - R.w * 0.09, 0, x + R.w * 0.03, 0);
-      g1.addColorStop(0, 'rgba(90,150,190,0)');
-      g1.addColorStop(0.7, 'rgba(120,190,220,' + (0.16 * hold).toFixed(3) + ')');
-      g1.addColorStop(1, 'rgba(210,240,255,0)');
+      g1.addColorStop(0, 'rgba(150,150,155,0)');
+      g1.addColorStop(0.7, 'rgba(180,180,188,' + (0.16 * hold).toFixed(3) + ')');
+      g1.addColorStop(1, 'rgba(235,235,240,0)');
       ctx.fillStyle = g1;
       ctx.fillRect(x0, gy, x1 - x0, gh);
 
@@ -496,7 +358,7 @@
         const ly = gy + (k / 16) * gh;
         const a = 0.10 * hold * (1 - Math.abs(k / 16 - 0.5) * 1.4);
         if (a <= 0.002) continue;
-        ctx.strokeStyle = 'rgba(150,210,235,' + a.toFixed(3) + ')';
+        ctx.strokeStyle = 'rgba(200,200,208,' + a.toFixed(3) + ')';
         ctx.beginPath();
         ctx.moveTo(x0, ly);
         ctx.lineTo(x, ly);
@@ -516,14 +378,14 @@
         const m = onBody(s.u, s.v);
         if (m < 0.05) continue;
         const tw = 0.5 + 0.5 * Math.sin(t * 3.2 + s.p * 5.0);
-        ctx.fillStyle = 'rgba(225,255,242,' + (amp * m * tw * 0.55).toFixed(3) + ')';
+        ctx.fillStyle = 'rgba(255,238,240,' + (amp * m * tw * 0.55).toFixed(3) + ')';
         ctx.fillRect(PX(s.u), PY(s.v), s.s, s.s);
       }
 
       const cx = PX(S.cx), cy = PY(S.cy);
       const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, R.w * 0.42);
-      halo.addColorStop(0, 'rgba(47,214,148,' + (amp * 0.07).toFixed(3) + ')');
-      halo.addColorStop(1, 'rgba(47,214,148,0)');
+      halo.addColorStop(0, 'rgba(230,57,77,' + (amp * 0.07).toFixed(3) + ')');
+      halo.addColorStop(1, 'rgba(230,57,77,0)');
       ctx.fillStyle = halo;
       ctx.fillRect(0, 0, W, H);
     }
@@ -550,9 +412,45 @@
       ctx.globalAlpha = 1;
     }
 
+    /* The camera move. Each line owns a framing; the plate eases from one to
+       the next as the line lands, so the section plays as a shot list instead
+       of one unbroken lap. Written as an accumulation rather than a lookup —
+       every view above the playhead is folded in, in order — which keeps it a
+       pure function of `prog` and therefore exactly reversible. */
+    const BASE_VIEW = { zoom: 1, ox: 0.5, oy: 0.5 };
+    function viewAt() {
+      let v = BASE_VIEW;
+      for (let i = 0; i < N; i++) {
+        const want = (C.services[i] && C.services[i].view) || BASE_VIEW;
+        const a = arriveAt(i);
+        // starts a touch before the line lands so the move leads the copy
+        const t = U.smoothstep(a - 0.05, a + 0.11, prog);
+        if (t <= 0) break;
+        v = {
+          zoom: U.lerp(v.zoom, want.zoom, t),
+          ox:   U.lerp(v.ox,   want.ox,   t),
+          oy:   U.lerp(v.oy,   want.oy,   t)
+        };
+      }
+      return v;
+    }
+
+    /* How much bigger cover is than contain for the current viewport — the
+       zoom that turns this plate's contain-fit back into the hero's
+       cover-fit. 1 on a 16:9 screen, where the two are the same rectangle. */
+    function coverRatio() {
+      const img = turnSeq.get(plate.index);
+      if (!img || !W || !H) return 1;
+      const a = W / img.naturalWidth, b = H / img.naturalHeight;
+      return Math.max(a, b) / Math.min(a, b);
+    }
+
     /* ── scroll choreography ─────────────────────────────────────────── */
     g.set(items, { opacity: 0, x: -26 });
     g.set(rules, { scaleX: 0 });
+    // hidden until the dissolve lifts it, or the stage would sit on top of
+    // the hero's last hundred viewport-heights fully opaque
+    g.set(stage, { opacity: DISS > 0 ? 0 : 1 });
 
     ST.create({
       trigger: '#services', start: 'top bottom', end: 'bottom top',
@@ -565,9 +463,40 @@
       onUpdate: function (self) {
         prog = self.progress;
 
-        // one full counter-clockwise revolution across the section
-        const frame = prog * (turnSeq.n - 1);
-        plate.set(frame, { zoom: 1.0, ox: 0.5, oy: 0.5, fit: 'contain' });
+        /* Dissolve up over the tail of the hero. The turntable is already
+           turning underneath it, so the two films overlap rather than the
+           second one starting once the first has stopped. */
+        g.set(stage, { opacity: DISS > 0 ? U.smoothstep(0, DISS, prog) : 1 });
+
+        /* The turntable is baked from the hero's final camera, so frame 0 is
+           the hero's last frame. The only thing left that could give the
+           hand-off away is the fit: the hero fills the viewport, the
+           turntable has to show the whole car. On a 16:9 screen those are the
+           same rectangle and `ratio` is 1, so nothing happens. Anywhere else
+           the plate starts at the hero's exact framing and eases back to the
+           full car — which reads as the crane continuing, not as a cut. */
+        /* The revolution runs over what is left after the dissolve. Holding
+           frame 0 through the hand-off is the whole point: frame 0 is baked
+           from the hero's final camera, so while both plates are on screen
+           they are showing the same image and the fade is invisible. Start
+           turning during the dissolve and the car is 36° out by the halfway
+           point, which is exactly what reads as a jump. */
+        const turned = U.clamp((prog - DISS) / (1 - DISS || 1), 0, 1);
+        const frame = turned * (turnSeq.n - 1);
+        /* Hold the hero's exact framing for the whole dissolve — the moment
+           both plates are on screen is the one moment they must not differ —
+           then hand over to the shot list. `k` is that handover, so the first
+           service's push-in is a continuation of the hero's crane rather than
+           a second move starting after it. */
+        const ratio = coverRatio();
+        const v = viewAt();
+        const k = U.smoothstep(DISS, DISS + 0.16, prog);
+        plate.set(frame, {
+          zoom: U.lerp(ratio, v.zoom, k),
+          ox:   U.lerp(0.5,   v.ox,   k),
+          oy:   U.lerp(0.5,   v.oy,   k),
+          fit:  'contain'
+        });
         turnSeq.hint(frame);
 
         // the menu populates and stays; the newest line reads brightest
@@ -590,157 +519,40 @@
           holoFrame = U.clamp(Math.round(frame), 0, holoSeq.n - 1);
           let best = 0;
           for (let i = 0; i < N; i++) best = Math.max(best, effectWeightOf(i));
-          const lead = (prog % SLICE) / SLICE;
+          const sl = slice();
+          const lead = ((prog - head() + sl) % sl) / sl;
           holoScan = U.smoothstep(0.02, 0.86, lead);
           holoAlpha = best * 0.9;
           holoSeq.hint(holoFrame);
         }
 
         // PPF is a film sweeping over the paint — a DOM layer, not canvas
-        const filmW = effectWeightOf(0);
-        const filmL = effectLocalOf(0);
-        g.set(film, {
-          opacity: filmW * U.smoothstep(0.04, 0.2, filmL) * (1 - U.smoothstep(0.85, 1, filmL)),
-          backgroundPositionX: (filmL * 240 - 60).toFixed(1) + '%'
-        });
+        if (FILM_I >= 0) {
+          const filmW = effectWeightOf(FILM_I);
+          const filmL = effectLocalOf(FILM_I);
+          g.set(film, {
+            opacity: filmW * U.smoothstep(0.04, 0.2, filmL) * (1 - U.smoothstep(0.85, 1, filmL)),
+            backgroundPositionX: (filmL * 240 - 60).toFixed(1) + '%'
+          });
+        }
+
+        // Car detailing reaches inside: the cabin warms up under the glass,
+        // holds while the line is landing, then falls away again.
+        if (CABIN_I >= 0) {
+          const cabL = effectLocalOf(CABIN_I);
+          g.set(cabin, {
+            opacity: effectWeightOf(CABIN_I) * U.smoothstep(0.05, 0.3, cabL) * 0.85
+          });
+        }
       }
     });
 
     resize();
-    w.addEventListener('resize', resize);
+    // the overlap is a viewport tall, so its share of the scrub changes with
+    // the viewport — re-measure before ScrollTrigger re-reads positions
+    w.addEventListener('resize', function () { resize(); measureDissolve(); });
+    ST.addEventListener('refreshInit', measureDissolve);
     addLoop(draw);
-  };
-
-  /* ══════════════════════════════════════════════════════════════════════
-     SCENE 6 · comparison slider
-     ═══════════════════════════════════════════════════════════════════ */
-  Scenes.compare = function (seq) {
-    const stage  = document.getElementById('compareStage');
-    const clip   = document.getElementById('compareClip');
-    const handle = document.getElementById('compareHandle');
-    const after  = new w.APEX_Plate(document.getElementById('compareAfter'), seq);
-
-    const beforeCanvas = document.getElementById('compareBefore');
-    const bctx = beforeCanvas.getContext('2d', { alpha: false });
-
-    after.set(C.stills.compare, { zoom: 1.02 });
-
-    /* The "before" car is the same frame pushed through a neglect grade —
-       flat, dull, and carrying spots and swirls drawn on top. */
-    function paintBefore() {
-      const r = stage.getBoundingClientRect();
-      // The clip element narrows, but the image inside it must stay locked to
-      // the full stage width or the two halves will not line up.
-      beforeCanvas.style.width = r.width + 'px';
-      beforeCanvas.style.height = r.height + 'px';
-      U.sizeCanvas(beforeCanvas, r.width, r.height);
-      const img = seq.get(C.stills.compare);
-      if (!img) return;
-
-      const d = U.dpr();
-      bctx.setTransform(d, 0, 0, d, 0, 0);
-      bctx.clearRect(0, 0, r.width, r.height);
-      bctx.filter = 'saturate(0.34) contrast(0.78) brightness(0.86)';
-      const rect = U.coverRect(r.width, r.height, img.naturalWidth, img.naturalHeight, 0.5, 0.5, 1.02);
-      bctx.drawImage(img, rect.x, rect.y, rect.w, rect.h);
-      bctx.filter = 'none';
-
-      // oxidation haze
-      const haze = bctx.createLinearGradient(0, 0, 0, r.height);
-      haze.addColorStop(0, 'rgba(150,150,140,0.10)');
-      haze.addColorStop(1, 'rgba(120,120,112,0.03)');
-      bctx.fillStyle = haze;
-      bctx.fillRect(0, 0, r.width, r.height);
-
-      // water spots
-      for (let i = 0; i < 150; i++) {
-        const x = (Math.sin(i * 12.9898) * 43758.5453 % 1 + 1) % 1 * r.width;
-        const y = (Math.sin(i * 78.233) * 43758.5453 % 1 + 1) % 1 * r.height;
-        const rr = 2 + ((i * 7) % 9);
-        bctx.strokeStyle = 'rgba(230,230,220,0.09)';
-        bctx.lineWidth = 1;
-        bctx.beginPath(); bctx.arc(x, y, rr, 0, 6.2832); bctx.stroke();
-        bctx.fillStyle = 'rgba(230,230,220,0.035)';
-        bctx.beginPath(); bctx.arc(x, y, rr * 0.75, 0, 6.2832); bctx.fill();
-      }
-
-      // swirl marks
-      bctx.lineWidth = 1;
-      for (let i = 0; i < 700; i++) {
-        const a = i * 2.399;
-        const rr = (i / 700) ** 0.55 * Math.min(r.width, r.height) * 0.85;
-        const x = r.width * 0.52 + Math.cos(a) * rr * 1.35;
-        const y = r.height * 0.5 + Math.sin(a) * rr * 0.7;
-        bctx.strokeStyle = 'rgba(225,235,230,0.055)';
-        bctx.beginPath();
-        bctx.arc(x, y, 5 + (i % 8) * 2, a, a + 1.2);
-        bctx.stroke();
-      }
-    }
-
-    let drag = null;
-
-    /* One source of truth: the handle is always positioned by its GSAP x, and
-       the clip width is derived from it. Writing `left` here as well would
-       fight Draggable's transform. */
-    function setSplit(px) {
-      const wdt = stage.getBoundingClientRect().width;
-      const x = U.clamp(px, 26, wdt - 26);
-      clip.style.width = x + 'px';
-      g.set(handle, { x: x - wdt / 2 });
-      if (drag) drag.update();
-    }
-
-    function layout() {
-      after.resize();
-      paintBefore();
-      setSplit(stage.getBoundingClientRect().width * 0.5);
-    }
-
-    if (w.Draggable) {
-      drag = w.Draggable.create(handle, {
-        type: 'x', cursor: 'ew-resize', activeCursor: 'grabbing', bounds: stage,
-        inertia: !!w.InertiaPlugin,
-        onDrag: function () { clip.style.width = (this.x + stage.getBoundingClientRect().width / 2) + 'px'; },
-        onThrowUpdate: function () { clip.style.width = (this.x + stage.getBoundingClientRect().width / 2) + 'px'; }
-      })[0];
-    }
-
-    // opening move: the line sweeps in so the mechanic is obvious without copy
-    ST.create({
-      trigger: '#compare', start: 'top 72%', once: true,
-      onEnter: function () {
-        const wdt = stage.getBoundingClientRect().width;
-        const proxy = { v: 0.12 };
-        setSplit(wdt * proxy.v);
-        g.to(proxy, {
-          v: 0.52, duration: 1.7, ease: E.glide,
-          onUpdate: function () { setSplit(wdt * proxy.v); }
-        });
-      }
-    });
-
-    // a slow parallax so the stage is never dead while it is on screen
-    g.fromTo(stage, { y: 44 }, {
-      y: -44, ease: 'none',
-      scrollTrigger: { trigger: '#compare', start: 'top bottom', end: 'bottom top', scrub: 1 }
-    });
-
-    layout();
-    w.addEventListener('resize', layout);
-    // Pinning other sections changes the document width (scrollbar), which
-    // moves the stage. Re-measure whenever ScrollTrigger re-measures, or the
-    // two halves drift out of register.
-    ST.addEventListener('refreshInit', layout);
-    ST.addEventListener('refresh', layout);
-    // Repaint once the exact still lands — the nearest neighbour that was
-    // drawn at boot is a different frame of the orbit.
-    seq.onProgress(function () {
-      if (!Scenes._cmpPainted && seq.state[C.stills.compare] === 2) {
-        Scenes._cmpPainted = true;
-        layout();
-      }
-    });
   };
 
   /* ══════════════════════════════════════════════════════════════════════
@@ -942,32 +754,9 @@
       scrollTrigger: { trigger: '#book', start: 'top 58%' }
     });
 
-    // CTA light pulse
-    g.to('.cta__pulse', {
-      opacity: 1, duration: 1.5, ease: 'sine.inOut', yoyo: true, repeat: -1
-    });
-    g.to('.cta', {
-      borderColor: 'rgba(47,214,148,.55)', duration: 1.5, ease: 'sine.inOut', yoyo: true, repeat: -1
-    });
-
     g.to('.book__glow', {
       scale: 1.16, opacity: 0.72, duration: 5.5, ease: 'sine.inOut', yoyo: true, repeat: -1
     });
-
-    /* A highlight rakes along the shoulder line, the way a light does when you
-       walk past a car in a dark studio. MotionPath follows the SVG arc, which
-       tracks the body far better than a straight translate would. */
-    if (w.MotionPathPlugin && !U.reducedMotion) {
-      const spark = document.getElementById('bookSpark');
-      g.timeline({ repeat: -1, repeatDelay: 2.6 })
-        .set(spark, { opacity: 0 })
-        .to(spark, { opacity: 1, duration: 0.5, ease: 'sine.out' }, 0)
-        .to(spark, {
-          duration: 4.2, ease: E.glide,
-          motionPath: { path: '#sweepPath', align: '#sweepPath', alignOrigin: [0.5, 0.5] }
-        }, 0)
-        .to(spark, { opacity: 0, duration: 0.7, ease: 'sine.in' }, 3.5);
-    }
 
     w.addEventListener('resize', function () { plate.resize(); });
   };
@@ -975,9 +764,7 @@
   Scenes.init = function (seq, lenis, turnSeq, holoSeq) {
     buildEases();
     const heroPlate = Scenes.hero(seq);
-    Scenes.inspect(seq);
     Scenes.services(turnSeq || seq, holoSeq);
-    Scenes.compare(seq);
     Scenes.gallery(seq, lenis);
     Scenes.voices();
     Scenes.stats();

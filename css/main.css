@@ -1,22 +1,29 @@
 /* ============================================================================
-   APEX Detail Studio — Melbourne
+   Studio X Detailing — Melbourne
    Swiss grid, editorial scale, matte black. Nothing decorative that a
    Nolan title card wouldn't do.
+
+   Palette: black and dark red. The greys are warmed a few degrees toward the
+   red so the page reads as one temperature rather than a red accent dropped
+   onto neutral charcoal.
    ========================================================================== */
 
 /* ── tokens ───────────────────────────────────────────────────────────── */
 :root{
-  --black:      #050506;
-  --graphite:   #0d0e11;
-  --graphite-2: #16181c;
-  --graphite-3: #212429;
-  --titanium:   #b9bdc2;
-  --titanium-d: #6d7278;
-  --white:      #f2f3f4;
+  --black:      #050304;
+  --graphite:   #100a0c;
+  --graphite-2: #1a1013;
+  --graphite-3: #251619;
+  --titanium:   #c2b9bb;
+  --titanium-d: #7b6b6e;
+  --white:      #f4f2f2;
 
-  --emerald:    #0e7a52;
-  --emerald-lo: #05301f;
-  --emerald-hi: #2fd694;
+  /* --crimson-hi is the only red that ever carries text, so it stays light
+     enough to clear AA contrast on --black. */
+  --crimson:    #8e131f;
+  --crimson-lo: #2b060c;
+  --crimson-hi: #e6394d;
+  --crimson-rgb: 230,57,77;
 
   --glass:      rgba(255,255,255,.045);
   --glass-line: rgba(255,255,255,.10);
@@ -45,7 +52,7 @@ img,canvas{ display:block; max-width:100%; }
 ul,ol{ list-style:none; }
 a{ color:inherit; text-decoration:none; }
 h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--white); }
-::selection{ background:var(--emerald); color:#fff; }
+::selection{ background:var(--crimson); color:#fff; }
 
 /* ── type scale ───────────────────────────────────────────────────────── */
 .display{
@@ -86,7 +93,7 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   margin-top:12px; height:1px; background:rgba(255,255,255,.10); overflow:hidden; opacity:0;
 }
 .loader__bar i{
-  display:block; height:100%; width:100%; background:var(--emerald-hi);
+  display:block; height:100%; width:100%; background:var(--crimson-hi);
   transform:scaleX(0); transform-origin:0 50%;
 }
 .loader__curtain{
@@ -116,9 +123,15 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   transition:color .4s var(--e-out);
 }
 .nav__links a:hover{ color:var(--white); }
+/* a <button>, because it opens the booking dialog rather than going anywhere —
+   so it has to be stripped back to the anchor it used to look like */
 .nav__cta{
   border:1px solid rgba(255,255,255,.28); padding:9px 18px; color:var(--white)!important;
+  background:none; cursor:pointer;
+  font-family:var(--fm); font-size:.64rem; letter-spacing:.2em; text-transform:uppercase;
+  transition:border-color .4s var(--e-out);
 }
+.nav__cta:hover{ border-color:var(--white); }
 @media (max-width:640px){ .nav__links a:not(.nav__cta){ display:none; } }
 
 .scroll-hint{
@@ -129,8 +142,11 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
 }
 .scroll-hint i{ display:block; width:1px; height:38px; background:linear-gradient(var(--titanium-d),transparent); }
 
-/* ── hero (scenes 1–3) ────────────────────────────────────────────────── */
-.hero{ height:640vh; position:relative; }
+/* ── opening ────────────────────────────────────────────────── */
+/* 640vh of film plus one viewport of overlap: the last viewport is where the
+   turntable dissolves up over this stage, and the stage has to still be stuck
+   through it. Scenes.hero ends its scrub a viewport early to match. */
+.hero{ height:740vh; position:relative; }
 .hero__stage{ position:sticky; top:0; height:100vh; overflow:hidden; background:var(--black); }
 .hero__canvas{ position:absolute; inset:0; width:100%; height:100%; }
 .hero__vignette{
@@ -157,35 +173,20 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   text-transform:uppercase; color:var(--titanium-d);
 }
 
-/* ── scene 4 · inspection ─────────────────────────────────────────────── */
-.inspect{ height:220vh; position:relative; }
-.inspect__stage{ position:sticky; top:0; height:100vh; overflow:hidden; }
-.inspect__plate,.inspect__fx{ position:absolute; inset:0; width:100%; height:100%; }
-.inspect__fx{ mix-blend-mode:screen; }
-.inspect__scrim{
-  position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(to right, rgba(5,5,6,.92) 0%, rgba(5,5,6,.15) 44%, transparent 70%),
-             linear-gradient(to top, rgba(5,5,6,.9), transparent 46%);
-}
-.inspect__head{ position:absolute; left:var(--edge); top:clamp(96px,16vh,180px); }
-.inspect__head h2{ margin-top:16px; }
-.inspect__readout{
-  position:absolute; left:var(--edge); bottom:clamp(48px,9vh,96px);
-  display:grid; grid-template-columns:repeat(2,minmax(170px,1fr));
-  gap:1px 42px; max-width:520px;
-}
-.inspect__readout li{
-  display:flex; align-items:baseline; gap:8px; padding:11px 0;
-  border-top:1px solid rgba(255,255,255,.07);
-  font-family:var(--fm); font-size:.62rem; letter-spacing:.16em; text-transform:uppercase;
-}
-.inspect__readout span{ flex:1; color:var(--titanium-d); }
-.inspect__readout b{ font-weight:400; color:var(--white); font-variant-numeric:tabular-nums; font-size:.82rem; }
-.inspect__readout i{ font-style:normal; color:var(--titanium-d); font-size:.55rem; }
-@media (max-width:760px){ .inspect__readout{ grid-template-columns:1fr; } }
+/* ── services ───────────────────────────────────────────────── */
+/* Pulled TWO viewports back into the hero, which is not arbitrary: a sticky
+   stage stops sticking once it reaches the bottom of its own section, at
+   `heroHeight - 100vh`. The dissolve therefore has to be finished by that
+   point or the hero slides upward mid-cross-fade. One viewport of overlap put
+   the fade exactly on the release; two puts it entirely inside the stuck
+   range, and the hero is fully covered by the time it lets go.
 
-/* ── scene 5 · services ───────────────────────────────────────────────── */
-.services{ height:600vh; position:relative; }
+   Both stages are sticky at top:0 and one viewport tall, so they occupy the
+   same rectangle and the later one simply dissolves up over the earlier one.
+   Scenes.services measures the overlap's share of the scrub off this height
+   and Scenes.hero ends its scrub at this section's top, so the three stay in
+   agreement if any of them changes. */
+.services{ height:600vh; position:relative; margin-top:-200vh; }
 .services__stage{ position:sticky; top:0; height:100vh; overflow:hidden; }
 .services__viewport{ position:absolute; inset:0; }
 .services__plate,.services__fx,.services__holo{
@@ -205,7 +206,7 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   position:absolute; inset:0; pointer-events:none; opacity:0;
   background:
     radial-gradient(60% 40% at 24% 62%, rgba(46,32,22,.55), transparent 70%),
-    radial-gradient(50% 34% at 78% 40%, rgba(20,44,34,.42), transparent 70%),
+    radial-gradient(50% 34% at 78% 40%, rgba(58,20,26,.42), transparent 70%),
     linear-gradient(180deg, rgba(6,7,8,.9), rgba(10,9,8,.6));
 }
 /* the car is centre stage now, so the scrim only has to hold the left column
@@ -226,16 +227,18 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   position:absolute; left:var(--edge); bottom:clamp(56px,10vh,110px);
   width:min(38ch,44vw); pointer-events:none;
 }
+/* six lines have to stack inside one viewport between the heading and the
+   bottom edge, so the rhythm is tighter than a five-line menu needed */
 .svc-item{
   position:relative; display:grid;
   grid-template-columns:auto 1fr;
   column-gap:clamp(14px,1.4vw,26px);
-  padding:clamp(13px,1.5vh,20px) 0;
+  padding:clamp(9px,1.15vh,17px) 0;
   opacity:0; will-change:transform,opacity;
 }
 .svc-item__num{
   font-family:var(--fm); font-size:.6rem; letter-spacing:.22em;
-  color:var(--emerald-hi); padding-top:.42em;
+  color:var(--crimson-hi); padding-top:.42em;
 }
 .svc-item__name{
   font-size:clamp(1.02rem,1.62vw,1.6rem); line-height:1.1;
@@ -258,43 +261,13 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   .svc-menu{ width:min(30ch,72vw); }
   .svc-item__note{ display:none; }
 }
+/* short viewports: the notes are the first thing to go, then the rules tighten */
+@media (max-height:800px){
+  .svc-item__note{ display:none; }
+  .svc-item{ padding:clamp(8px,1.1vh,14px) 0; }
+}
 
-/* ── scene 6 · comparison ─────────────────────────────────────────────── */
-.compare{ padding:clamp(90px,14vh,190px) var(--edge) clamp(90px,14vh,190px); }
-.compare__head h2{ margin-top:16px; }
-.compare__stage{
-  position:relative; margin-top:clamp(38px,6vh,74px);
-  aspect-ratio:16/9; width:100%; overflow:hidden; background:var(--black);
-  border:1px solid rgba(255,255,255,.07);
-}
-.compare__plate{ position:absolute; inset:0; width:100%; height:100%; }
-.compare__clip{ position:absolute; inset:0; width:50%; overflow:hidden; will-change:width; }
-/* sized in JS to the stage width so both halves stay registered */
-.compare__clip .compare__plate{ max-width:none; }
-.compare__handle{
-  position:absolute; top:0; bottom:0; left:50%; width:52px; margin-left:-26px;
-  display:grid; place-items:center; touch-action:none; z-index:5;
-}
-.compare__handle i{ position:absolute; top:0; bottom:0; width:1px; background:rgba(255,255,255,.55); }
-.compare__grip{
-  width:46px; height:46px; border:1px solid rgba(255,255,255,.5);
-  border-radius:50%; background:rgba(5,5,6,.45); backdrop-filter:blur(6px);
-  position:relative;
-}
-.compare__grip::before,.compare__grip::after{
-  content:""; position:absolute; top:50%; width:6px; height:6px; margin-top:-3px;
-  border-top:1px solid var(--white); border-right:1px solid var(--white);
-}
-.compare__grip::before{ left:12px; transform:rotate(-135deg); }
-.compare__grip::after{ right:12px; transform:rotate(45deg); }
-.compare__tags{
-  position:absolute; bottom:24px; display:flex; flex-direction:column; gap:7px;
-  font-family:var(--fm); font-size:.58rem; letter-spacing:.18em; text-transform:uppercase;
-}
-.compare__tags--before{ left:26px; color:rgba(255,255,255,.5); }
-.compare__tags--after{ right:26px; align-items:flex-end; color:var(--emerald-hi); }
-
-/* ── scene 7 · gallery ────────────────────────────────────────────────── */
+/* ── gallery ────────────────────────────────────────────────── */
 .gallery{ position:relative; background:var(--black); }
 .gallery__track{
   display:flex; align-items:center; gap:clamp(30px,4.5vw,90px);
@@ -315,7 +288,7 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
 .shot__meta{ position:absolute; left:clamp(20px,2.4vw,42px); bottom:clamp(20px,2.4vw,40px); }
 .shot__meta span{
   font-family:var(--fm); font-size:.58rem; letter-spacing:.24em;
-  text-transform:uppercase; color:var(--emerald-hi);
+  text-transform:uppercase; color:var(--crimson-hi);
 }
 .shot__meta h3{ margin:10px 0 6px; font-size:clamp(1.35rem,2.6vw,2.5rem); }
 .shot__meta p{ font-size:.82rem; color:var(--titanium-d); }
@@ -326,7 +299,7 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   border-bottom:1px solid rgba(255,255,255,.28); padding-bottom:8px;
 }
 
-/* ── scene 8 · testimonials ───────────────────────────────────────────── */
+/* ── testimonials ───────────────────────────────────────────── */
 .voices{ padding:clamp(110px,18vh,240px) var(--edge); perspective:1400px; }
 .voices__head h2{ margin-top:16px; }
 .voices__field{
@@ -362,7 +335,7 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   text-transform:uppercase; color:var(--titanium-d);
 }
 
-/* ── scene 9 · statistics ─────────────────────────────────────────────── */
+/* ── statistics ─────────────────────────────────────────────── */
 .stats{ padding:clamp(110px,17vh,240px) var(--edge) clamp(130px,20vh,280px); }
 .stats__grid{
   display:grid; grid-template-columns:repeat(4,1fr);
@@ -389,15 +362,16 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
 /* ── consultation menu ────────────────────────────────────────────────── */
 .menu{ padding:clamp(110px,17vh,230px) var(--edge) clamp(40px,6vh,90px); }
 .menu__head h2{ margin:16px 0 22px; }
+/* six services, two rows of three — the hairline gaps are the grid's own
+   background showing through a 1px gap */
 .menu__grid{
   margin-top:clamp(46px,7vh,96px);
   display:grid; gap:1px;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(3,1fr);
   background:rgba(255,255,255,.08);
   border:1px solid rgba(255,255,255,.08);
 }
 .card{ background:var(--black); position:relative; }
-.card--wide{ grid-column:span 4; }
 .card a{
   display:flex; flex-direction:column; height:100%;
   padding:clamp(26px,2.5vw,40px);
@@ -420,29 +394,27 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
 .card__time{
   margin-top:20px; align-self:flex-start;
   font-family:var(--fm); font-size:.58rem; letter-spacing:.22em; text-transform:uppercase;
-  color:var(--emerald-hi); border:1px solid rgba(47,214,148,.32);
+  color:var(--crimson-hi); border:1px solid rgba(var(--crimson-rgb),.32);
   padding:7px 13px; border-radius:999px;
 }
 .card::after{
   content:""; position:absolute; inset:0; pointer-events:none; opacity:0;
-  background:radial-gradient(420px 320px at var(--cx,50%) var(--cy,50%), rgba(47,214,148,.10), transparent 70%);
+  background:radial-gradient(420px 320px at var(--cx,50%) var(--cy,50%), rgba(var(--crimson-rgb),.10), transparent 70%);
   transition:opacity .5s var(--e-out);
 }
 .card:hover::after{ opacity:1; }
-.card:hover .card__num{ color:var(--emerald-hi); }
+.card:hover .card__num{ color:var(--crimson-hi); }
 .card:hover p{ opacity:1; transform:translateY(0); }
 
 @media (max-width:1080px){
   .menu__grid{ grid-template-columns:repeat(2,1fr); }
-  .card--wide{ grid-column:span 2; }
   .card p{ opacity:1; transform:none; }
 }
 @media (max-width:620px){
   .menu__grid{ grid-template-columns:1fr; }
-  .card--wide{ grid-column:span 1; }
 }
 
-/* ── scene 10 · booking ───────────────────────────────────────────────── */
+/* ── booking ───────────────────────────────────────────────── */
 .book{ position:relative; min-height:130vh; display:grid; place-items:center; overflow:hidden; }
 /* inset rather than translate(-50%,-50%): GSAP animates this element's
    transform, and a CSS `translate` on top composes unpredictably with it */
@@ -453,43 +425,39 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
 .book__glow{
   position:absolute; left:50%; top:56%; width:120vw; height:60vh;
   translate:-50% -50%; pointer-events:none;
-  background:radial-gradient(50% 50% at 50% 50%, rgba(15,122,82,.20), transparent 68%);
-}
-/* the arc a highlight travels along the car's shoulder (MotionPath) */
-.book__path{
-  position:absolute; left:0; top:0; width:100%; height:100%;
-  pointer-events:none; opacity:0; visibility:hidden;
-}
-.book__spark{
-  position:absolute; left:0; top:0; width:7px; height:7px; border-radius:50%;
-  background:#eafff5; pointer-events:none; opacity:0;
-  box-shadow:0 0 26px 8px rgba(47,214,148,.65), 0 0 60px 20px rgba(47,214,148,.22);
+  background:radial-gradient(50% 50% at 50% 50%, rgba(142,19,31,.20), transparent 68%);
 }
 .book__inner{ position:relative; width:100%; padding:0 var(--edge); text-align:left; }
 .display--book{ margin:clamp(26px,3.4vw,54px) 0 clamp(38px,5vw,76px); }
 .cta{
   position:relative; display:inline-flex; align-items:center; justify-content:center;
   padding:clamp(20px,2vw,28px) clamp(38px,4vw,64px);
-  border:1px solid rgba(255,255,255,.34); overflow:hidden; isolation:isolate;
+  border:1px solid rgba(255,255,255,.34); cursor:pointer; background:none; font:inherit;
+  transition:border-color .45s var(--e-out), background-color .45s var(--e-out);
 }
+.cta:hover{ border-color:var(--crimson-hi); background:rgba(var(--crimson-rgb),.08); }
 .cta__label{
   font-family:var(--fm); font-size:.72rem; letter-spacing:.26em;
   text-transform:uppercase; color:var(--white); position:relative; z-index:2;
 }
-.cta__pulse{
-  position:absolute; inset:0; z-index:1; opacity:0;
-  background:radial-gradient(60% 140% at 50% 50%, rgba(47,214,148,.36), transparent 70%);
-}
+/* six contact cells: auto-fit so they land 3-up on desktop and reflow down to
+   one column without a breakpoint per step */
 .book__meta{
   margin-top:clamp(60px,8vw,120px);
-  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:var(--gut);
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+  gap:clamp(22px,2.4vw,38px) var(--gut);
   border-top:1px solid rgba(255,255,255,.09); padding-top:26px;
 }
+.book__meta a{ transition:color .4s var(--e-out); }
+.book__meta a:hover{ color:var(--crimson-hi); }
 .book__meta span{
   display:block; font-family:var(--fm); font-size:.56rem; letter-spacing:.24em;
   text-transform:uppercase; color:var(--titanium-d); margin-bottom:9px;
 }
-.book__meta b{ font-weight:300; color:var(--white); font-size:.92rem; line-height:1.4; }
+.book__meta b{
+  font-weight:300; color:var(--white); font-size:.92rem; line-height:1.4;
+  overflow-wrap:anywhere;   /* the email is longer than the narrowest cell */
+}
 @media (max-width:700px){ .book__meta{ grid-template-columns:1fr; } }
 
 /* ── footer ───────────────────────────────────────────────────────────── */
@@ -502,6 +470,255 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
 
 /* ── reduced motion ───────────────────────────────────────────────────── */
 @media (prefers-reduced-motion:reduce){
-  .hero{ height:180vh; } .services{ height:240vh; } .inspect{ height:120vh; }
+  /* no overlap to dissolve across: at 240vh the hand-off would eat most of
+     the section, so the sections simply follow one another */
+  .hero{ height:180vh; } .services{ height:240vh; margin-top:0; }
   .hero__type,.svc,.hero__caption{ opacity:1; }
+}
+
+/* ── booking dialog ───────────────────────────────────────────────────────
+   Same palette and the same two typefaces as the page; nothing here is a
+   component borrowed from elsewhere. The deck shows one card at a time so the
+   dialog never becomes a long form pretending to be a conversation. */
+body.is-modal{ overflow:hidden; }
+
+.bk{ position:fixed; inset:0; z-index:1200; display:grid; place-items:center; }
+.bk[hidden]{ display:none; }
+.bk__scrim{
+  position:absolute; inset:0; background:rgba(3,2,2,.82);
+  backdrop-filter:blur(9px); -webkit-backdrop-filter:blur(9px);
+}
+.bk__dialog{
+  position:relative; z-index:1;
+  width:min(880px, calc(100vw - 2*var(--edge)));
+  max-height:calc(100vh - 6vh);
+  display:flex; flex-direction:column;
+  background:linear-gradient(168deg, var(--graphite-2), var(--black) 62%);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 60px 140px -60px #000;
+}
+/* a hairline of brand colour along the top edge, nothing more */
+.bk__dialog::before{
+  content:""; position:absolute; left:0; right:0; top:0; height:1px;
+  background:linear-gradient(90deg, transparent, var(--crimson-hi) 22%, var(--crimson) 60%, transparent);
+}
+
+.bk__bar{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:clamp(20px,2.4vw,30px) clamp(22px,2.8vw,38px) 0;
+}
+.bk__mark{ display:block; font-size:.92rem; letter-spacing:.42em; color:var(--white); font-weight:500; }
+.bk__sub{
+  display:block; margin-top:5px; font-family:var(--fm); font-size:.55rem;
+  letter-spacing:.24em; text-transform:uppercase; color:var(--titanium-d);
+}
+.bk__close{
+  width:38px; height:38px; display:grid; place-items:center; cursor:pointer;
+  background:none; border:1px solid rgba(255,255,255,.14); color:var(--titanium);
+  transition:border-color .35s var(--e-out), color .35s var(--e-out);
+}
+.bk__close svg{ width:12px; height:12px; stroke:currentColor; stroke-width:1.4; fill:none; }
+.bk__close:hover{ border-color:var(--crimson-hi); color:var(--white); }
+
+/* progress rail */
+.bk__rail{
+  display:grid; grid-template-columns:repeat(4,1fr); gap:8px;
+  padding:clamp(18px,2.2vw,26px) clamp(22px,2.8vw,38px) 0;
+}
+.bk__rail li{ display:flex; flex-direction:column; gap:9px; }
+.bk__rail i{ display:block; height:2px; background:rgba(255,255,255,.10); transition:background-color .5s var(--e-out); }
+.bk__rail span{
+  font-family:var(--fm); font-size:.54rem; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--titanium-d); transition:color .5s var(--e-out);
+}
+.bk__rail .is-done i{ background:rgba(var(--crimson-rgb),.45); }
+.bk__rail .is-on i{ background:var(--crimson-hi); }
+.bk__rail .is-on span{ color:var(--white); }
+
+/* the deck */
+.bk__deck{
+  flex:1; overflow-y:auto; overscroll-behavior:contain;
+  padding:clamp(22px,2.8vw,34px) clamp(22px,2.8vw,38px);
+  perspective:1400px;
+}
+.bk__card[hidden]{ display:none; }
+.bk__h{ font-size:clamp(1.5rem,2.7vw,2.3rem); line-height:1.02; letter-spacing:-.03em; }
+.bk__lede{
+  margin-top:12px; max-width:52ch; font-size:.88rem; line-height:1.55;
+  color:var(--titanium-d);
+}
+
+/* step 1 — the flash cards */
+.bk__svcs{
+  margin-top:clamp(20px,2.4vw,30px);
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr));
+  gap:clamp(10px,1.2vw,16px);
+}
+.bk-svc{ position:relative; perspective:900px; min-height:174px; }
+.bk-svc__flip{
+  position:absolute; inset:0;
+  transform-style:preserve-3d; transition:transform .62s var(--e-io);
+}
+.bk-svc.is-turned .bk-svc__flip{ transform:rotateY(180deg); }
+.bk-svc__face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  display:flex; flex-direction:column; align-items:flex-start; text-align:left;
+  gap:7px; padding:17px 18px;
+  background:var(--graphite); border:1px solid rgba(255,255,255,.10);
+  transition:border-color .4s var(--e-out), background-color .4s var(--e-out);
+}
+.bk-svc__front{ cursor:pointer; font:inherit; color:inherit; width:100%; }
+.bk-svc__front:hover{ border-color:rgba(255,255,255,.24); }
+.bk-svc__back{
+  transform:rotateY(180deg); cursor:pointer;
+  background:linear-gradient(155deg, var(--crimson-lo), var(--graphite) 70%);
+  justify-content:space-between;
+}
+.bk-svc__num{
+  font-family:var(--fm); font-size:.55rem; letter-spacing:.22em; color:var(--crimson-hi);
+}
+.bk-svc__name{ font-size:1.02rem; line-height:1.14; letter-spacing:-.02em; color:var(--white); }
+.bk-svc__blurb{ font-size:.76rem; line-height:1.45; color:var(--titanium-d); }
+.bk-svc__lead{
+  margin-top:auto; font-family:var(--fm); font-size:.52rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--titanium-d);
+}
+.bk-svc__facetext{ font-size:.82rem; line-height:1.5; color:var(--white); }
+.bk-svc__hint{
+  font-family:var(--fm); font-size:.5rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--titanium-d);
+}
+/* selection is a state on the card, not a checkbox bolted beside it */
+.bk-svc.is-on .bk-svc__front{
+  border-color:var(--crimson-hi);
+  background:linear-gradient(155deg, rgba(var(--crimson-rgb),.14), var(--graphite) 62%);
+}
+.bk-svc__tick{
+  position:absolute; top:14px; right:14px; width:19px; height:19px;
+  display:grid; place-items:center; border-radius:50%;
+  border:1px solid rgba(255,255,255,.18); opacity:0; transform:scale(.7);
+  transition:opacity .3s var(--e-out), transform .3s var(--e-out);
+}
+.bk-svc__tick svg{ width:10px; height:10px; fill:none; stroke:var(--black); stroke-width:2.2; }
+.bk-svc.is-on .bk-svc__tick{
+  opacity:1; transform:scale(1); background:var(--crimson-hi); border-color:var(--crimson-hi);
+}
+.bk-svc__turn{
+  position:absolute; bottom:13px; right:13px; z-index:2;
+  width:23px; height:23px; border-radius:50%; cursor:pointer;
+  background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.2);
+  color:var(--titanium); font-family:var(--fm); font-size:.6rem; line-height:1;
+  transition:border-color .35s var(--e-out), color .35s var(--e-out);
+}
+.bk-svc__turn:hover{ border-color:var(--crimson-hi); color:var(--white); }
+
+/* step 2 — calendar and slots */
+.bk__when{
+  margin-top:clamp(20px,2.4vw,30px);
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(0,.85fr);
+  gap:clamp(18px,2.4vw,34px);
+}
+@media (max-width:720px){ .bk__when{ grid-template-columns:1fr; } }
+.bk__calhead{
+  display:flex; align-items:center; justify-content:space-between;
+  font-family:var(--fm); font-size:.62rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--white); margin-bottom:14px;
+}
+.bk__nav{
+  width:28px; height:28px; cursor:pointer; background:none; color:var(--titanium);
+  border:1px solid rgba(255,255,255,.14); font-size:.9rem; line-height:1;
+  transition:border-color .35s var(--e-out), color .35s var(--e-out), opacity .3s;
+}
+.bk__nav:hover:not(:disabled){ border-color:var(--crimson-hi); color:var(--white); }
+.bk__nav:disabled{ opacity:.28; cursor:default; }
+/* once the two columns collapse the calendar would stretch to the dialog's
+   full width and the square cells with it — a month is not a landing page */
+.bk__cal{ max-width:380px; }
+.bk__dow,.bk__grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
+.bk__dow{
+  margin-bottom:5px; font-family:var(--fm); font-size:.5rem; letter-spacing:.14em;
+  color:var(--titanium-d); text-align:center;
+}
+.bk-day{
+  aspect-ratio:1; display:grid; place-items:center; cursor:pointer;
+  background:none; border:1px solid transparent; color:var(--titanium);
+  font-family:var(--fm); font-size:.68rem;
+  transition:border-color .3s var(--e-out), background-color .3s var(--e-out), color .3s var(--e-out);
+}
+.bk-day:hover:not(.is-off){ border-color:rgba(255,255,255,.22); color:var(--white); }
+.bk-day.is-off{ color:rgba(255,255,255,.13); cursor:default; }
+.bk-day.is-on{ background:var(--crimson-hi); border-color:var(--crimson-hi); color:var(--black); }
+.bk__label{
+  display:block; margin-bottom:13px; font-family:var(--fm); font-size:.55rem;
+  letter-spacing:.2em; text-transform:uppercase; color:var(--titanium-d);
+}
+.bk__chips{ display:grid; grid-template-columns:repeat(auto-fill,minmax(66px,1fr)); gap:5px; }
+.bk-chip{
+  padding:9px 4px; cursor:pointer; background:none; color:var(--titanium);
+  border:1px solid rgba(255,255,255,.12);
+  font-family:var(--fm); font-size:.63rem; letter-spacing:.06em;
+  transition:border-color .3s var(--e-out), background-color .3s var(--e-out), color .3s var(--e-out);
+}
+.bk-chip:hover{ border-color:rgba(255,255,255,.3); color:var(--white); }
+.bk-chip.is-on{ background:var(--crimson-hi); border-color:var(--crimson-hi); color:var(--black); }
+
+/* step 3 — one question per card, so it reads as a conversation rather than
+   a form. Each question gets room to breathe; the answer is the only thing on
+   screen that can be typed into. */
+.bk__q{ min-height:262px; display:flex; flex-direction:column; }
+.bk__q[hidden]{ display:none; }
+.bk__qcount{
+  display:block; margin-bottom:14px;
+  font-family:var(--fm); font-size:.54rem; letter-spacing:.24em; color:var(--crimson-hi);
+}
+.bk__q .bk__field{ margin-top:clamp(22px,3vw,36px); max-width:520px; }
+.bk__field{ display:flex; flex-direction:column; gap:8px; }
+.bk__field input,.bk__field textarea{
+  width:100%; padding:15px 16px; font-family:var(--ff); font-size:1.05rem; font-weight:300;
+  color:var(--white); background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.12); border-radius:0; resize:vertical;
+  transition:border-color .35s var(--e-out), background-color .35s var(--e-out);
+}
+.bk__field input::placeholder,.bk__field textarea::placeholder{ color:rgba(255,255,255,.20); }
+.bk__field input:focus,.bk__field textarea:focus{
+  outline:none; border-color:var(--crimson-hi); background:rgba(255,255,255,.05);
+}
+
+/* step 4 — review */
+.bk__summary{
+  margin-top:clamp(20px,2.4vw,30px);
+  display:grid; grid-template-columns:auto 1fr; gap:0 22px;
+}
+.bk__summary dt{
+  padding:11px 0; border-top:1px solid rgba(255,255,255,.08);
+  font-family:var(--fm); font-size:.54rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--titanium-d); white-space:nowrap;
+}
+.bk__summary dd{
+  padding:11px 0; border-top:1px solid rgba(255,255,255,.08);
+  font-size:.9rem; color:var(--white); overflow-wrap:anywhere;
+}
+.bk__fine{ margin-top:22px; font-size:.78rem; color:var(--titanium-d); }
+.bk__fine a{ color:var(--crimson-hi); }
+
+/* footer */
+.bk__foot{
+  display:flex; align-items:center; gap:16px;
+  padding:clamp(16px,2vw,22px) clamp(22px,2.8vw,38px);
+  border-top:1px solid rgba(255,255,255,.08);
+}
+.bk__err{ flex:1; font-family:var(--fm); font-size:.58rem; letter-spacing:.12em; color:var(--crimson-hi); }
+.bk__btn{
+  padding:14px 30px; cursor:pointer; font-family:var(--fm); font-size:.63rem;
+  letter-spacing:.24em; text-transform:uppercase;
+  color:var(--black); background:var(--crimson-hi); border:1px solid var(--crimson-hi);
+  transition:background-color .35s var(--e-out), color .35s var(--e-out), border-color .35s var(--e-out);
+}
+.bk__btn:hover{ background:var(--white); border-color:var(--white); }
+.bk__btn--ghost{ background:none; color:var(--titanium); border-color:rgba(255,255,255,.18); }
+.bk__btn--ghost:hover{ background:none; color:var(--white); border-color:var(--white); }
+.bk__btn[hidden]{ display:none; }
+
+@media (prefers-reduced-motion:reduce){
+  .bk-svc__flip{ transition:none; }
 }

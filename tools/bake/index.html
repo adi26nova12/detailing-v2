@@ -2,14 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>APEX — sequence bake</title>
+<title>Studio X — sequence bake</title>
 <style>
   html,body{margin:0;background:#08090b;color:#b9bdc2;font:13px/1.5 ui-monospace,Menlo,monospace}
   #wrap{display:flex;flex-direction:column;height:100vh}
   #stage{flex:1;display:grid;place-items:center;overflow:hidden}
   canvas{max-width:100%;max-height:100%;box-shadow:0 0 0 1px #1c1f24}
   #bar{padding:10px 16px;border-top:1px solid #1c1f24;display:flex;gap:20px;align-items:center}
-  b{color:#2fd694;font-weight:400}
+  b{color:#e6394d;font-weight:400}
 </style>
 </head>
 <body>
@@ -50,13 +50,14 @@ const CFG = {
      2.12 m wide with mirrors, so every shot needs backing off or the nose
      clips the frame on the wider poses. */
   dolly: 1.16,
-  paint: 0x0d5f3e,     // metallic emerald
+  paint: 0x6e0d15,     // metallic dark red — the basecoat under the clearcoat,
+                       // so it renders considerably lighter than it reads here
   envEvery: 3,         // rebuild the IBL every N frames as the rails ignite
 
   /* The model's exterior shell is authored as carbon fibre, split across these
      four materials (front half, rear half, rear deck, front bumper). The
      mirrors — Carbon fiber.003 — stay carbon on purpose: it is a real M detail
-     and it keeps the emerald from flattening the car into one colour. */
+     and it keeps the red from flattening the car into one colour. */
   bodyMaterials: ['Carbon fiber', 'Carbon fiber.001', 'Carbon fiber.002', 'Carbon fiber.004'],
 
   /* Daytime running lights. Bright emissive alone just clips to a flat white
@@ -64,27 +65,33 @@ const CFG = {
      dark, so these two settings belong together. */
   redLampScale: 0.12,
 
-  /* Scene 5 is a turntable: the camera is locked off and the car rotates on
-     the stage. `dir: -1` spins it counter-clockwise as seen from above. */
+  /* The turntable: the camera is locked off and the car rotates on the stage.
+
+     Frame 0 has to BE the hero's last frame. The site cross-fades one into the
+     other, so any difference in bearing, height, distance or exposure reads as
+     a cut in the middle of what is supposed to be a single move. These are
+     therefore CAM_KEYS[last] verbatim — dolly is applied in poseTurnCamera the
+     same way poseCamera applies it, so this number stays comparable to a key.
+     Change the last camera key and these have to follow. */
   turn: {
     count: 240,
-    azimuth: -34,      // fixed camera bearing
-    elevation: 11.5,
-    distance: 7.55,
-    fov: 30,
-    targetY: 0.74,
+    azimuth: 99.0,     // fixed camera bearing — CAM_KEYS[last]
+    elevation: 18.5,
+    distance: 8.40,
+    fov: 29.5,
+    targetY: 0.84,
     /* +1 spins the model counter-clockwise seen from above: rotating about
        +Y sends a point at +Z toward +X, and in a bird's-eye view (+X right,
        +Z down the screen) bottom-to-right is counter-clockwise. Verified by
        eye too — the nose sweeps left, head-on, then right. */
     dir: 1,
-    exposure: 1.02
+    exposure: 1.05   // schedule(1).exposure
   },
 
   /* Scene 5's holographic scan. Baked over the frame range the services
      section actually shows, from the same camera, so the wireframe registers
      exactly on the car underneath it. */
-  holo: { from: 176, to: 420, color: 0x39f0ad }
+  holo: { from: 176, to: 420, color: 0xf03952 }
 };
 
 // azimuth°, elevation°, distance, target height, fov°, roll°
@@ -104,10 +111,10 @@ const STRIPS = [
   { az: 0.00, len: 9.0, y: 4.30, r: 0.16, rad: 34, tint: 0xffffff },
   { az: 0.25, len: 7.0, y: 4.05, r: 0.13, rad: 22, tint: 0xf6fbff },
   { az: 0.75, len: 7.0, y: 4.05, r: 0.13, rad: 22, tint: 0xf6fbff },
-  { az: 0.50, len: 6.0, y: 2.70, r: 0.11, rad: 20, tint: 0xe8fff6 },
+  { az: 0.50, len: 6.0, y: 2.70, r: 0.11, rad: 20, tint: 0xf2f4f8 },
   { az: 0.14, len: 3.2, y: 1.55, r: 0.07, rad: 12, tint: 0xfffdf6 },
   { az: 0.86, len: 3.2, y: 1.55, r: 0.07, rad: 12, tint: 0xfffdf6 },
-  { az: 0.06, len: 11.0, y: 5.40, r: 0.05, rad: 16, tint: 0xd8ffe8 }
+  { az: 0.06, len: 11.0, y: 5.40, r: 0.05, rad: 16, tint: 0xffe4e6 }
 ];
 
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
@@ -330,7 +337,7 @@ function prepareModel(root) {
   return root;
 }
 
-/* Repaint the body. Anything that is the car's exterior shell gets the emerald
+/* Repaint the body. Anything that is the car's exterior shell gets the red
    metallic + clearcoat treatment; the model's own carbon, glass, rubber and
    chrome are left exactly as authored. */
 function applyPaint(names) {
@@ -542,15 +549,32 @@ function renderHoloFrame(i) {
    rig so the section reads evenly however far the visitor has scrolled. */
 function poseTurnCamera() {
   const T = CFG.turn;
+  const dist = T.distance * CFG.dolly;          // as poseCamera does
   const a = T.azimuth * Math.PI / 180, e = T.elevation * Math.PI / 180;
   camera.position.set(
-    Math.cos(a) * Math.cos(e) * T.distance,
-    Math.sin(e) * T.distance + T.targetY,
-    Math.sin(a) * Math.cos(e) * T.distance
+    Math.cos(a) * Math.cos(e) * dist,
+    Math.sin(e) * dist + T.targetY,
+    Math.sin(a) * Math.cos(e) * dist
   );
   camera.fov = T.fov;
-  camera.lookAt(0, T.targetY, 0);
+  camera.lookAt(0.10, T.targetY, 0);            // the same off-centre target
   camera.updateProjectionMatrix();
+}
+
+/* The look the hero ends on: every rail lit, the coat fully tightened, the
+   lamps down out of their darkness boost. renderFrame arrives here by
+   schedule; the turntable has no schedule, so it is set explicitly rather
+   than inherited from whatever was rendered last. */
+function applyTerminalLook() {
+  const s = schedule(1);
+  key.intensity  = 2.6 * s.w[0];
+  rim.intensity  = 3.4 * s.w[3];
+  fill.intensity = 1.5 * s.w[4];
+  paintMats.forEach((m) => {
+    m.roughness = lerp(0.42, 0.20, s.coat);
+    if ('clearcoatRoughness' in m) m.clearcoatRoughness = lerp(0.30, 0.015, s.coat);
+  });
+  lampMats.forEach((l) => { l.mat.emissiveIntensity = l.base; });
 }
 
 function renderTurnFrame(i, holo) {
@@ -558,8 +582,9 @@ function renderTurnFrame(i, holo) {
   modelRoot.rotation.y = baseRotY + T.dir * (i / T.count) * Math.PI * 2;
   modelRoot.updateWorldMatrix(true, true);
 
+  if (!holo) applyTerminalLook();
   renderer.toneMappingExposure = holo ? 1.0 : T.exposure;
-  if (!holo && scene.fog) scene.fog.density = 0.026;
+  if (!holo && scene.fog) scene.fog.density = lerp(0.055, 0.024, smoothstep(0.1, 0.7, 1));
 
   poseTurnCamera();
   renderer.render(scene, camera);

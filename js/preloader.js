@@ -1,5 +1,5 @@
 /* ============================================================================
-   APEX — preloader
+   Studio X Detailing — preloader
    The logo draws itself while the priority frames decode, then the curtain
    wipes up off the first frame of the sequence.
    ========================================================================== */
@@ -88,7 +88,7 @@
           g.set(self.bar, { scaleX: self.shown });
         }
       })
-        .to('.loader__bar i', { backgroundColor: '#f2f3f4', duration: 0.3 }, '-=0.2')
+        .to('.loader__bar i', { backgroundColor: '#f4f2f2', duration: 0.3 }, '-=0.2')
         .to('.loader__meta, .loader__bar', { opacity: 0, duration: 0.4 }, '+=0.15')
         .to(self.strokes, {
           strokeDashoffset: function (i, t) { return -parseFloat(t.style.getPropertyValue('--len')); },

@@ -15,8 +15,7 @@
   const g = w.gsap;
 
   function registerPlugins() {
-    const list = ['ScrollTrigger', 'Observer', 'Draggable', 'InertiaPlugin',
-                  'Flip', 'MotionPathPlugin', 'CustomEase', 'SplitText'];
+    const list = ['ScrollTrigger', 'Observer', 'CustomEase', 'SplitText'];
     const found = list.map(function (n) { return w[n]; }).filter(Boolean);
     g.registerPlugin.apply(g, found);
   }
@@ -63,7 +62,7 @@
     /* Velocity-based skew: sections lean into the direction of travel and
        settle back. One decaying value on the ticker — spawning a tween per
        scroll event would stack hundreds of them during a single flick. */
-    const setters = Array.from(document.querySelectorAll('.voices, .stats, .compare'))
+    const setters = Array.from(document.querySelectorAll('.voices, .stats'))
       .map(function (t) { return g.quickSetter(t, 'skewY', 'deg'); });
 
     let skew = 0, target = 0;
@@ -136,7 +135,7 @@
       // Handles for debugging and for the swap-in workflow in HIGGSFIELD.md.
       w.APEX_APP = {
         seq: seq, turn: turnSeq, holo: holoSeq,
-        loader: loader, hero: heroPlate
+        loader: loader, hero: heroPlate, lenis: lenis
       };
 
       return loader.finish().then(function () {
