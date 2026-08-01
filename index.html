@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>APEX — Detail Studio · Melbourne</title>
-<meta name="description" content="Ceramic coating, paint correction and paint protection film for collectors. A private detailing studio in Melbourne.">
-<meta name="theme-color" content="#050506">
+<title>Studio X Detailing — Ceramic Coating, PPF &amp; Detailing · Melbourne</title>
+<meta name="description" content="Melbourne's trusted destination for ceramic coating, paint protection film, paint correction, window tinting, and complete detailing. Protect, restore and elevate your vehicle.">
+<meta name="theme-color" content="#050304">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,14 +18,14 @@
 <!-- ─────────────────────────────  PRELOADER  ───────────────────────────── -->
 <div class="loader" id="loader" aria-hidden="true">
   <div class="loader__inner">
+    <!-- [X] — the mark draws itself stroke by stroke while frames decode -->
     <svg class="loader__mark" viewBox="0 0 240 120" fill="none" aria-hidden="true">
-      <path class="loader__stroke" d="M18 102 L60 18 L102 102" />
-      <path class="loader__stroke" d="M36 74 L84 74" />
-      <path class="loader__stroke" d="M132 102 L132 18 L176 18 Q206 18 206 44 Q206 70 176 70 L132 70" />
-      <path class="loader__stroke" d="M170 70 L214 102" />
+      <path class="loader__stroke" d="M62 22 L120 60 L178 22" />
+      <path class="loader__stroke" d="M62 98 L120 60 L178 98" />
+      <path class="loader__stroke" d="M46 18 L22 18 L22 102 L46 102" />
+      <path class="loader__stroke" d="M194 18 L218 18 L218 102 L194 102" />
     </svg>
     <div class="loader__meta">
-      <span class="loader__label">Calibrating studio lighting</span>
       <span class="loader__count" id="loaderCount">00</span>
     </div>
     <div class="loader__bar"><i id="loaderBar"></i></div>
@@ -36,14 +36,14 @@
 <!-- ─────────────────────────────  CHROME  ──────────────────────────────── -->
 <header class="nav" id="nav">
   <a class="nav__brand" href="#hero">
-    <span class="nav__mark">APEX</span>
-    <span class="nav__sub">Detail Studio — Melbourne</span>
+    <span class="nav__mark">STUDIO X</span>
+    <span class="nav__sub">Detailing — Melbourne</span>
   </a>
   <nav class="nav__links">
     <a href="#services">Services</a>
     <a href="#gallery">Work</a>
     <a href="#menu">Consult</a>
-    <a class="nav__cta" href="#book" data-magnetic>Book</a>
+    <button class="nav__cta" type="button" data-book data-magnetic>Book</button>
   </nav>
 </header>
 
@@ -53,7 +53,7 @@
 
 <main id="smooth-content">
 
-<!-- ═══════════════ SCENE 1–3 · DISCOVERY ═══════════════ -->
+<!-- ═══════════════ OPENING ═══════════════ -->
 <section class="hero" id="hero">
   <div class="hero__stage">
     <canvas class="hero__canvas" id="heroCanvas"></canvas>
@@ -61,51 +61,29 @@
     <div class="hero__vignette"></div>
 
     <div class="hero__caption hero__caption--a" data-hero-cap="0">
-      <span class="eyebrow">Bay 01 — Ambient</span>
       <p>Somewhere in the dark, four hundred hours of work is waiting to be found.</p>
     </div>
 
     <div class="hero__caption hero__caption--b" data-hero-cap="1">
-      <span class="eyebrow">Bay 02 — Correction</span>
       <p>Nine thousand micro-scratches. Removed, not filled.</p>
     </div>
 
     <div class="hero__type" id="heroType">
       <h1 class="display">
-        <span class="line"><span>Perfection isn't washed.</span></span>
-        <span class="line"><span>It's engineered.</span></span>
+        <span class="line"><span>Protect. Restore.</span></span>
+        <span class="line"><span>Elevate.</span></span>
       </h1>
       <div class="hero__type-meta">
-        <span>Est. 2019</span><span>Cremorne, VIC</span><span>By appointment</span>
+        <span>Williamstown North, VIC</span><span>By appointment</span><span>@studioxdetailing</span>
       </div>
     </div>
   </div>
 </section>
 
-<!-- ═══════════════ SCENE 4 · PAINT INSPECTION ═══════════════ -->
-<section class="inspect" id="inspect">
-  <div class="inspect__stage">
-    <canvas class="inspect__plate" id="inspectPlate"></canvas>
-    <canvas class="inspect__fx" id="inspectFx"></canvas>
-    <div class="inspect__scrim"></div>
-
-    <div class="inspect__head">
-      <span class="eyebrow">Scene 04 — Surface analysis</span>
-      <h2 class="h-lg">Move across the panel.</h2>
-    </div>
-
-    <ul class="inspect__readout" id="inspectReadout">
-      <li data-metric="depth"><span>Paint depth</span><b>0</b><i>µm</i></li>
-      <li data-metric="gloss"><span>Gloss</span><b>0</b><i>GU</i></li>
-      <li data-metric="reflect"><span>Reflection (DOI)</span><b>0</b><i>%</i></li>
-      <li data-metric="water"><span>Water repellency</span><b>0</b><i>°</i></li>
-      <li data-metric="contam"><span>Contamination</span><b>0</b><i>%</i></li>
-      <li data-metric="swirl"><span>Swirl density</span><b>0</b><i>/cm²</i></li>
-    </ul>
-  </div>
-</section>
-
-<!-- ═══════════════ SCENE 5 · SERVICES ═══════════════ -->
+<!-- ═══════════════ SERVICES ═══════════════
+     Overlaps the tail of the hero by one viewport (see `.services` in the CSS)
+     and dissolves up over it, so the opening film hands straight to the
+     turntable instead of cutting to it. -->
 <section class="services" id="services">
   <div class="services__stage">
     <div class="services__viewport">
@@ -118,7 +96,6 @@
     </div>
 
     <div class="services__head">
-      <span class="eyebrow">Scene 05 — The stage</span>
       <h2 class="h-lg">Everything<br>we do.</h2>
     </div>
 
@@ -143,12 +120,18 @@
       </li>
       <li class="svc-item" data-mood="swirl">
         <span class="svc-item__num">04</span>
+        <span class="svc-item__name">Paint Correction</span>
+        <span class="svc-item__note">Swirl marks removed, not filled &mdash; depth restored</span>
+        <i class="svc-item__rule"></i>
+      </li>
+      <li class="svc-item" data-mood="cabin">
+        <span class="svc-item__num">05</span>
         <span class="svc-item__name">Car Detailing</span>
-        <span class="svc-item__note">Correction until the reflection is a mirror</span>
+        <span class="svc-item__note">Deep clean and refresh, every surface inside and out</span>
         <i class="svc-item__rule"></i>
       </li>
       <li class="svc-item" data-mood="package">
-        <span class="svc-item__num">05</span>
+        <span class="svc-item__num">06</span>
         <span class="svc-item__name">New Car Package</span>
         <span class="svc-item__note">Specified before delivery &mdash; protected, never corrected</span>
         <i class="svc-item__rule"></i>
@@ -157,42 +140,23 @@
   </div>
 </section>
 
-<!-- ═══════════════ SCENE 6 · COMPARISON ═══════════════ -->
-<section class="compare" id="compare">
-  <div class="compare__head">
-    <span class="eyebrow">Scene 06 — Before / After</span>
-    <h2 class="h-lg">Drag the line.</h2>
-  </div>
-  <div class="compare__stage" id="compareStage">
-    <canvas class="compare__plate compare__plate--after"  id="compareAfter"></canvas>
-    <div class="compare__clip" id="compareClip">
-      <canvas class="compare__plate compare__plate--before" id="compareBefore"></canvas>
-      <div class="compare__tags compare__tags--before">
-        <span>Oxidation</span><span>Water spots</span><span>Swirl marks</span>
-      </div>
-    </div>
-    <div class="compare__tags compare__tags--after">
-      <span>Ceramic 9H</span><span>Mirror DOI</span><span>Ultra gloss</span>
-    </div>
-    <div class="compare__handle" id="compareHandle">
-      <i></i><span class="compare__grip"></span>
-    </div>
-  </div>
-</section>
-
-<!-- ═══════════════ SCENE 7 · GALLERY ═══════════════ -->
+<!-- ═══════════════ GALLERY ═══════════════
+     PLACEHOLDER: the five commissions below (cars, suburbs, treatments) are
+     template copy, not Studio X's real job history. Replace with real work
+     before this goes live. -->
 <section class="gallery" id="gallery">
   <div class="gallery__track" id="galleryTrack">
     <div class="gallery__intro">
-      <span class="eyebrow">Scene 07</span>
       <h2 class="h-lg">Selected<br>commissions.</h2>
-      <p class="lede">Six of the two hundred and twelve cars that left this studio last year.</p>
+      <p class="lede">Melbourne's trusted destination for ceramic coating, paint protection film,
+         paint correction, window tinting and complete detailing — cutting-edge technology and
+         expert craftsmanship, on every car that comes through the bay.</p>
     </div>
 
     <article class="shot" data-shot="0">
       <canvas class="shot__plate"></canvas>
       <div class="shot__mask"></div>
-      <div class="shot__meta"><span>01 / Toorak</span><h3>M4 Competition</h3><p>Stage 3 correction · 9H ceramic</p></div>
+      <div class="shot__meta"><span>01 / Toorak</span><h3>M8 Competition</h3><p>Stage 3 correction · 9H ceramic</p></div>
     </article>
     <article class="shot" data-shot="1">
       <canvas class="shot__plate"></canvas>
@@ -221,10 +185,12 @@
   </div>
 </section>
 
-<!-- ═══════════════ SCENE 8 · TESTIMONIALS ═══════════════ -->
+<!-- ═══════════════ TESTIMONIALS ═══════════════
+     PLACEHOLDER: these four quotes and the names attached to them are invented
+     template copy. Studio X is a real business — swap in real reviews (their
+     Google listing) before publishing, or delete the section. -->
 <section class="voices" id="voices">
   <div class="voices__head">
-    <span class="eyebrow">Scene 08 — Clients</span>
     <h2 class="h-lg">Quiet<br>referrals.</h2>
   </div>
   <div class="voices__field" id="voicesField">
@@ -234,7 +200,7 @@
     </figure>
     <figure class="glass" data-depth="1.4">
       <blockquote>The car came back looking wet. It has not stopped looking wet.</blockquote>
-      <figcaption><b>A. Nakamura</b><span>M4 Competition · Toorak</span></figcaption>
+      <figcaption><b>A. Nakamura</b><span>M8 Competition · Toorak</span></figcaption>
     </figure>
     <figure class="glass" data-depth="0.6">
       <blockquote>Booked for a coating. Stayed for the fact they photograph every panel before touching it.</blockquote>
@@ -247,7 +213,10 @@
   </div>
 </section>
 
-<!-- ═══════════════ SCENE 9 · STATISTICS ═══════════════ -->
+<!-- ═══════════════ STATISTICS ═══════════════
+     PLACEHOLDER: these four figures are template numbers. The only claim
+     studioxdetailing.com.au actually makes is "5-star rated by Melbourne
+     clients" — replace or remove the rest before publishing. -->
 <section class="stats" id="stats">
   <ul class="stats__grid">
     <li><b class="stats__num" data-to="500" data-suffix="+">0</b><span>Cars detailed</span></li>
@@ -266,93 +235,213 @@
   </div>
 
   <ul class="menu__grid" id="menuGrid">
-    <li class="card" data-magnetic>
-      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20Paint%20Protection%20Film">
+    
+      <button type="button" data-book data-service="ppf">
         <span class="card__num">01</span>
         <h3>Paint Protection<br>Film <em>(PPF)</em></h3>
-        <p>Coverage options, edge wrapping, what the film hides and what it doesn't.</p>
+        <p>Invisible protection against chips and road damage. Coverage options, edge
+           wrapping, what the film hides and what it doesn't.</p>
         <span class="card__time">15 min</span>
-      </a>
+      </button>
     </li>
     <li class="card" data-magnetic>
-      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20Ceramic%20Coating">
+      <button type="button" data-book data-service="ceramic">
         <span class="card__num">02</span>
         <h3>Ceramic<br>Coating</h3>
-        <p>System, expected life on your paint, and the prep the finish actually depends on.</p>
+        <p>Long-lasting gloss and easier maintenance. The system, its expected life on your
+           paint, and the prep the finish depends on.</p>
         <span class="card__time">15 min</span>
-      </a>
+      </button>
     </li>
     <li class="card" data-magnetic>
-      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20Window%20Tinting">
+      <button type="button" data-book data-service="tint">
         <span class="card__num">03</span>
         <h3>Window<br>Tinting</h3>
-        <p>Legal VLT for Victoria, heat rejection, and how the glass reads once it's done.</p>
+        <p>Reduce heat, block UV and sharpen how the car reads. Legal VLT for Victoria,
+           and what the glass looks like once it's done.</p>
         <span class="card__time">15 min</span>
-      </a>
+      </button>
     </li>
     <li class="card" data-magnetic>
-      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20Car%20Detailing">
+      <button type="button" data-book data-service="correct">
         <span class="card__num">04</span>
-        <h3>Car<br>Detailing</h3>
-        <p>Correction stages, interior scope, and how long the car stays with us.</p>
+        <h3>Paint<br>Correction</h3>
+        <p>Swirl marks removed and depth restored. Which stage your paint needs, and how
+           much of the finish is recoverable.</p>
         <span class="card__time">15 min</span>
-      </a>
+      </button>
     </li>
-    <li class="card card--wide" data-magnetic>
-      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20New%20Car%20Package">
+    <li class="card" data-magnetic>
+      <button type="button" data-book data-service="detail">
         <span class="card__num">05</span>
-        <h3>New Car Package</h3>
-        <p>Film, coating and tint specified together before delivery — so the paint is never
-           corrected, only protected.</p>
+        <h3>Car<br>Detailing</h3>
+        <p>Deep clean, restore and refresh every surface inside and out. Interior scope,
+           and how long the car stays with us.</p>
+        <span class="card__time">15 min</span>
+      </button>
+    </li>
+    <li class="card" data-magnetic>
+      <button type="button" data-book data-service="package">
+        <span class="card__num">06</span>
+        <h3>New Car<br>Package</h3>
+        <p>Complete protection from day one. Film, coating and tint specified together
+           before delivery — so the paint is never corrected, only protected.</p>
         <span class="card__time">Package</span>
-      </a>
+      </button>
     </li>
   </ul>
 </section>
 
-<!-- ═══════════════ SCENE 10 · BOOKING ═══════════════ -->
+<!-- ═══════════════ BOOKING ═══════════════ -->
 <section class="book" id="book">
   <canvas class="book__plate" id="bookPlate"></canvas>
   <div class="book__glow"></div>
-  <svg class="book__path" viewBox="0 0 1200 600" aria-hidden="true" preserveAspectRatio="none">
-    <path id="sweepPath" d="M -80 372 C 220 300, 400 262, 620 268 S 1010 320, 1280 386" fill="none"/>
-  </svg>
-  <i class="book__spark" id="bookSpark" aria-hidden="true"></i>
   <div class="book__inner">
-    <span class="eyebrow">Scene 10 — Enquiry</span>
     <h2 class="display display--book">
       <span class="line"><span>Bring us</span></span>
       <span class="line"><span>something worth</span></span>
       <span class="line"><span>the hours.</span></span>
     </h2>
-    <a class="cta" href="mailto:studio@apexdetail.com.au?subject=Detail%20booking" data-magnetic>
-      <span class="cta__pulse"></span>
-      <span class="cta__label">Book Your Detail</span>
-    </a>
+    <button class="cta" type="button" data-book data-magnetic>
+      <span class="cta__label">Book a consultation</span>
+    </button>
     <div class="book__meta">
-      <div><span>Studio</span><b>14 Dunstan Ave, Cremorne VIC 3121</b></div>
-      <div><span>Hours</span><b>Mon–Sat · by appointment</b></div>
-      <div><span>Contact</span><b>studio@apexdetail.com.au</b></div>
+      <div><span>Studio</span><b>Unit 17, 176 Maddox Rd<br>Williamstown North VIC 3016</b></div>
+      <div><span>Hours</span><b>9:00 – 18:30<br>By appointment</b></div>
+      <div><span>Phone</span><b><a href="tel:+61422286232">+61 422 286 232</a></b></div>
+      <div><span>Email</span><b><a href="mailto:Info.studioxdetailing@gmail.com">Info.studioxdetailing@gmail.com</a></b></div>
+      <div><span>Instagram</span><b><a href="https://www.instagram.com/studioxdetailing/" target="_blank" rel="noopener">@studioxdetailing</a></b></div>
+      <div><span>Turnaround</span><b>Detailing 1 day<br>Coating &amp; PPF 2–3 days</b></div>
     </div>
   </div>
 </section>
 
 <footer class="foot">
-  <span>APEX Detail Studio</span>
-  <span>Melbourne, Australia</span>
+  <span>Studio X Detailing</span>
+  <span>Williamstown North · Melbourne, Australia</span>
   <span id="footClock">—</span>
 </footer>
 
 </main>
 
+<!-- ═══════════════ BOOKING DIALOG ═══════════════
+     Four steps, each one a card that turns over into the next. Populated from
+     APEX.booking in js/config.js; driven by js/booking.js. -->
+<div class="bk" id="bk" hidden>
+  <div class="bk__scrim" data-bk-close></div>
+
+  <div class="bk__dialog" role="dialog" aria-modal="true" aria-labelledby="bkTitle">
+    <header class="bk__bar">
+      <div class="bk__ident">
+        <span class="bk__mark">STUDIO X</span>
+        <span class="bk__sub">Book a consultation</span>
+      </div>
+      <button class="bk__close" type="button" data-bk-close aria-label="Close booking">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 2 L14 14 M14 2 L2 14"/></svg>
+      </button>
+    </header>
+
+    <ol class="bk__rail" id="bkRail" aria-hidden="true">
+      <li><i></i><span>Service</span></li>
+      <li><i></i><span>When</span></li>
+      <li><i></i><span>You</span></li>
+      <li><i></i><span>Review</span></li>
+    </ol>
+
+    <div class="bk__deck" id="bkDeck">
+
+      <!-- 1 · service ------------------------------------------------------ -->
+      <section class="bk__card is-active" data-step="0">
+        <h2 class="bk__h" id="bkTitle">What is the car in for?</h2>
+        <p class="bk__lede">Pick as many as apply. Turn a card over to see what we will
+           cover in the consultation.</p>
+        <ul class="bk__svcs" id="bkSvcs"></ul>
+      </section>
+
+      <!-- 2 · when -------------------------------------------------------- -->
+      <section class="bk__card" data-step="1" hidden>
+        <h2 class="bk__h">When suits?</h2>
+        <p class="bk__lede">Mon–Sat, 9:00 to 18:30, by appointment.</p>
+        <div class="bk__when">
+          <div class="bk__cal">
+            <div class="bk__calhead">
+              <button class="bk__nav" type="button" id="bkPrev" aria-label="Previous month">‹</button>
+              <span id="bkMonth"></span>
+              <button class="bk__nav" type="button" id="bkNext" aria-label="Next month">›</button>
+            </div>
+            <div class="bk__dow"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+            <div class="bk__grid" id="bkGrid"></div>
+          </div>
+          <div class="bk__slots">
+            <span class="bk__label" id="bkSlotLabel">Pick a day first</span>
+            <div class="bk__chips" id="bkChips"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3 · details ----------------------------------------------------- -->
+      <!-- One question at a time. Every input stays in the DOM so answers
+           survive going back and forth; only the active one is shown. -->
+      <section class="bk__card" data-step="2" hidden>
+        <div class="bk__q" data-q="0">
+          <span class="bk__qcount">01 / 05</span>
+          <h2 class="bk__h">Who are we speaking to?</h2>
+          <p class="bk__lede">Just a name is fine.</p>
+          <label class="bk__field"><input type="text" id="bkName" autocomplete="name" placeholder="Your name" required></label>
+        </div>
+
+        <div class="bk__q" data-q="1" hidden>
+          <span class="bk__qcount">02 / 05</span>
+          <h2 class="bk__h">Best number to reach you?</h2>
+          <p class="bk__lede">Or skip it and give us an email on the next card.</p>
+          <label class="bk__field"><input type="tel" id="bkPhone" autocomplete="tel" inputmode="tel" placeholder="04__ ___ ___"></label>
+        </div>
+
+        <div class="bk__q" data-q="2" hidden>
+          <span class="bk__qcount">03 / 05</span>
+          <h2 class="bk__h">And an email?</h2>
+          <p class="bk__lede">One of the two is enough — whichever you would rather we used.</p>
+          <label class="bk__field"><input type="email" id="bkEmail" autocomplete="email" inputmode="email" placeholder="you@example.com"></label>
+        </div>
+
+        <div class="bk__q" data-q="3" hidden>
+          <span class="bk__qcount">04 / 05</span>
+          <h2 class="bk__h">What are we working on?</h2>
+          <p class="bk__lede">Make, model and year, as much as you know.</p>
+          <label class="bk__field"><input type="text" id="bkCar" placeholder="BMW M8 Competition, 2023"></label>
+        </div>
+
+        <div class="bk__q" data-q="4" hidden>
+          <span class="bk__qcount">05 / 05</span>
+          <h2 class="bk__h">Anything we should know?</h2>
+          <p class="bk__lede">Marks you have noticed, a deadline, where the car has been before. Optional.</p>
+          <label class="bk__field"><textarea id="bkNotes" rows="4" placeholder="Optional"></textarea></label>
+        </div>
+      </section>
+
+      <!-- 4 · review ------------------------------------------------------ -->
+      <section class="bk__card" data-step="3" hidden>
+        <h2 class="bk__h">Does this look right?</h2>
+        <p class="bk__lede">Sending opens your own mail app with this filled in — nothing
+           leaves your device until you press send there.</p>
+        <dl class="bk__summary" id="bkSummary"></dl>
+        <p class="bk__fine">Prefer to talk? <a href="tel:+61422286232">+61 422 286 232</a></p>
+      </section>
+    </div>
+
+    <footer class="bk__foot">
+      <button class="bk__btn bk__btn--ghost" type="button" id="bkBack" hidden>Back</button>
+      <span class="bk__err" id="bkErr" role="status"></span>
+      <button class="bk__btn" type="button" id="bkNext2">Continue</button>
+    </footer>
+  </div>
+</div>
+
 <!-- GSAP 3.13 — every plugin below is on the free CDN -->
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Observer.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Draggable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/InertiaPlugin.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MotionPathPlugin.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/CustomEase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
@@ -362,6 +451,7 @@
 <script src="js/sequence.js"></script>
 <script src="js/preloader.js"></script>
 <script src="js/scenes.js"></script>
+<script src="js/booking.js"></script>
 <script src="js/main.js"></script>
 </body>
 </html>

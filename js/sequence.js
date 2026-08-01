@@ -1,9 +1,9 @@
 /* ============================================================================
-   APEX — image sequence engine
+   Studio X Detailing — image sequence engine
 
    Owns every frame on the page. One decoded copy of each frame serves the
-   hero canvas, the inspection plate, the service push, the comparison slider,
-   the gallery and the booking hero, so nothing is fetched twice.
+   hero canvas, the turntable, the comparison slider, the gallery and the
+   booking hero, so nothing is fetched twice.
    ========================================================================== */
 (function (w) {
   'use strict';
@@ -136,11 +136,12 @@
     const d = U.dpr();
     const r = U.coverRect(cssW, cssH, img.naturalWidth, img.naturalHeight,
                           o.ox, o.oy, o.zoom || 1, o.fit);
+    const f = U.paintFilter(o.filter);
     ctx.setTransform(d, 0, 0, d, 0, 0);
     ctx.clearRect(0, 0, cssW, cssH);
-    if (o.filter) ctx.filter = o.filter;
+    if (f) ctx.filter = f;
     ctx.drawImage(img, r.x, r.y, r.w, r.h);
-    if (o.filter) ctx.filter = 'none';
+    if (f) ctx.filter = 'none';
   };
 
   /* ── canvas bound to the sequence ────────────────────────────────────── */
