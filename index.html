@@ -51,6 +51,9 @@
   <span>Scroll</span><i></i>
 </div>
 
+<!-- how far through the film the reader is — driven in Scenes.chrome -->
+<div class="prog" id="prog" aria-hidden="true"><i></i></div>
+
 <main id="smooth-content">
 
 <!-- ═══════════════ OPENING ═══════════════ -->
@@ -235,58 +238,76 @@
   </div>
 
   <ul class="menu__grid" id="menuGrid">
-    
-      <button type="button" data-book data-service="ppf">
+    <li class="card">
+      <button class="card__in" type="button" data-book data-service="ppf">
         <span class="card__num">01</span>
         <h3>Paint Protection<br>Film <em>(PPF)</em></h3>
         <p>Invisible protection against chips and road damage. Coverage options, edge
            wrapping, what the film hides and what it doesn't.</p>
-        <span class="card__time">15 min</span>
+        <span class="card__foot">
+          <span class="card__time">15 min</span>
+          <span class="card__go" aria-hidden="true">→</span>
+        </span>
       </button>
     </li>
-    <li class="card" data-magnetic>
-      <button type="button" data-book data-service="ceramic">
+    <li class="card">
+      <button class="card__in" type="button" data-book data-service="ceramic">
         <span class="card__num">02</span>
         <h3>Ceramic<br>Coating</h3>
         <p>Long-lasting gloss and easier maintenance. The system, its expected life on your
            paint, and the prep the finish depends on.</p>
-        <span class="card__time">15 min</span>
+        <span class="card__foot">
+          <span class="card__time">15 min</span>
+          <span class="card__go" aria-hidden="true">→</span>
+        </span>
       </button>
     </li>
-    <li class="card" data-magnetic>
-      <button type="button" data-book data-service="tint">
+    <li class="card">
+      <button class="card__in" type="button" data-book data-service="tint">
         <span class="card__num">03</span>
         <h3>Window<br>Tinting</h3>
         <p>Reduce heat, block UV and sharpen how the car reads. Legal VLT for Victoria,
            and what the glass looks like once it's done.</p>
-        <span class="card__time">15 min</span>
+        <span class="card__foot">
+          <span class="card__time">15 min</span>
+          <span class="card__go" aria-hidden="true">→</span>
+        </span>
       </button>
     </li>
-    <li class="card" data-magnetic>
-      <button type="button" data-book data-service="correct">
+    <li class="card">
+      <button class="card__in" type="button" data-book data-service="correct">
         <span class="card__num">04</span>
         <h3>Paint<br>Correction</h3>
         <p>Swirl marks removed and depth restored. Which stage your paint needs, and how
            much of the finish is recoverable.</p>
-        <span class="card__time">15 min</span>
+        <span class="card__foot">
+          <span class="card__time">15 min</span>
+          <span class="card__go" aria-hidden="true">→</span>
+        </span>
       </button>
     </li>
-    <li class="card" data-magnetic>
-      <button type="button" data-book data-service="detail">
+    <li class="card">
+      <button class="card__in" type="button" data-book data-service="detail">
         <span class="card__num">05</span>
         <h3>Car<br>Detailing</h3>
         <p>Deep clean, restore and refresh every surface inside and out. Interior scope,
            and how long the car stays with us.</p>
-        <span class="card__time">15 min</span>
+        <span class="card__foot">
+          <span class="card__time">15 min</span>
+          <span class="card__go" aria-hidden="true">→</span>
+        </span>
       </button>
     </li>
-    <li class="card" data-magnetic>
-      <button type="button" data-book data-service="package">
+    <li class="card">
+      <button class="card__in" type="button" data-book data-service="package">
         <span class="card__num">06</span>
         <h3>New Car<br>Package</h3>
         <p>Complete protection from day one. Film, coating and tint specified together
            before delivery — so the paint is never corrected, only protected.</p>
-        <span class="card__time">Package</span>
+        <span class="card__foot">
+          <span class="card__time">Package</span>
+          <span class="card__go" aria-hidden="true">→</span>
+        </span>
       </button>
     </li>
   </ul>

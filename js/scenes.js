@@ -169,6 +169,25 @@
     function slice() { return (0.89 - head()) / N; }
     function arriveAt(i) { return head() + i * slice(); }
 
+    /* Where the turntable is released. The two plates only have to agree while
+       the hero is still substantially on screen, and that is the first half of
+       the dissolve rather than all of it — holding frame 0 across the whole
+       overlap parked a full viewport of scroll on a single frame, which reads
+       as the film having stopped rather than as a seamless hand-off. */
+    function holdEnd() { return DISS * 0.55; }
+
+    /* A quadratic lead-in meeting a constant-speed turn. The car pulls away
+       from a standstill instead of snapping to scrub speed the moment the hold
+       releases, so the few degrees it moves while the hero is still fading are
+       imperceptible. Normalised so the last frame still lands exactly on the
+       end of the section. LEAD is the share of the remaining scroll spent
+       getting up to rate. */
+    const LEAD = 0.16;
+    function turnCurve(t) {
+      const v = t < LEAD ? (t * t) / (2 * LEAD) : t - LEAD * 0.5;
+      return v / (1 - LEAD * 0.5);
+    }
+
     /* `film` and `cabin` are DOM layers, not canvas effects, so they are
        driven from whichever line claims that mood rather than a fixed index. */
     function indexOfMood(mood) {
@@ -391,8 +410,27 @@
     }
     const EFFECTS = { swirl: drawSwirl, beads: drawBeads, tint: drawTint, package: drawPackage };
 
+    /* Ambient life. Everything else in this section is scrub-driven, so the
+       moment the reader stops scrolling every pixel stops with them — most
+       obviously across the hand-off, where the turntable is holding one frame
+       by design. A slow float on the viewport keeps the shot breathing without
+       touching the plate's own framing, and it ramps in with the dissolve so
+       it can never disturb the cross-fade with the hero. Translation only:
+       `resize` measures this element's box, and a scale here would quietly
+       mis-size the effect canvases. */
+    const viewport = document.querySelector('.services__viewport');
+    function breathe(t) {
+      if (!viewport) return;
+      const amp = DISS > 0 ? U.smoothstep(DISS * 0.4, DISS, prog) : 1;
+      const y = Math.sin(t * 0.62) * 13 * amp;
+      const x = Math.cos(t * 0.41) * 5 * amp;
+      viewport.style.transform =
+        'translate3d(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px,0)';
+    }
+
     function draw(t) {
       if (!live || !W) return;
+      if (!U.reducedMotion) breathe(t);
       drawHolo();
       measure();
       const d = U.dpr();
@@ -475,13 +513,14 @@
            same rectangle and `ratio` is 1, so nothing happens. Anywhere else
            the plate starts at the hero's exact framing and eases back to the
            full car — which reads as the crane continuing, not as a cut. */
-        /* The revolution runs over what is left after the dissolve. Holding
-           frame 0 through the hand-off is the whole point: frame 0 is baked
-           from the hero's final camera, so while both plates are on screen
-           they are showing the same image and the fade is invisible. Start
-           turning during the dissolve and the car is 36° out by the halfway
-           point, which is exactly what reads as a jump. */
-        const turned = U.clamp((prog - DISS) / (1 - DISS || 1), 0, 1);
+        /* The revolution runs over what is left after the hold. Frame 0 is
+           baked from the hero's final camera, so while both plates are on
+           screen they show the same image and the fade is invisible — but that
+           only has to survive the front half of the dissolve. Past `hold` the
+           lead-in takes over: near-zero rate while the hero finishes fading,
+           up to a steady turn once it is gone. */
+        const hold = holdEnd();
+        const turned = turnCurve(U.clamp((prog - hold) / (1 - hold || 1), 0, 1));
         const frame = turned * (turnSeq.n - 1);
         /* Hold the hero's exact framing for the whole dissolve — the moment
            both plates are on screen is the one moment they must not differ —
@@ -490,7 +529,10 @@
            a second move starting after it. */
         const ratio = coverRatio();
         const v = viewAt();
-        const k = U.smoothstep(DISS, DISS + 0.16, prog);
+        /* Released with the turn rather than after the dissolve, and over a
+           wider ramp — smoothstep leaves at zero rate, so the crane starts
+           moving before the hero is gone without the framing giving it away. */
+        const k = U.smoothstep(hold, hold + 0.22, prog);
         plate.set(frame, {
           zoom: U.lerp(ratio, v.zoom, k),
           ox:   U.lerp(0.5,   v.ox,   k),
@@ -706,27 +748,50 @@
     const grid = document.getElementById('menuGrid');
     if (!grid) return;
     const cards = Array.from(grid.querySelectorAll('.card'));
+    const inners = cards.map(function (c) { return c.querySelector('.card__in'); })
+                        .filter(Boolean);
 
+    /* The cells rise as one block and their contents follow half a beat
+       behind, so the grid reads as depth rather than six identical fades. */
     g.set(cards, { opacity: 0, y: 54 });
     g.to(cards, {
       opacity: 1, y: 0, duration: 1.15, ease: E.mass, stagger: 0.075,
       scrollTrigger: { trigger: '#menu', start: 'top 74%' }
     });
-
-    const heads = Array.from(document.querySelectorAll('.menu__head h2 , .menu__head .lede'));
-    g.from(heads, {
-      opacity: 0, y: 32, duration: 1, ease: E.mass, stagger: 0.1,
-      scrollTrigger: { trigger: '#menu', start: 'top 78%' }
+    /* clearProps matters: the inline transform GSAP leaves behind outranks the
+       :active press rule, and the button would stop responding to a click. */
+    g.from(inners, {
+      opacity: 0, y: 24, duration: 1.05, ease: E.mass, stagger: 0.075, delay: 0.14,
+      clearProps: 'all',
+      scrollTrigger: { trigger: '#menu', start: 'top 74%' }
     });
+
+    // the head (eyebrow, heading, lede) is choreographed in Scenes.type, with
+    // every other section heading on the page
 
     if (!U.fine || U.reducedMotion) return;
 
-    // the hover wash follows the pointer across each card
+    /* The hover wash follows the pointer across each card, and --mx/--my
+       (-1…1 from centre) drift the type a few pixels with it. The cell itself
+       never moves — the 1px grid it draws has to stay put. */
     cards.forEach(function (card) {
+      let raf = 0;
       card.addEventListener('mousemove', function (e) {
-        const r = card.getBoundingClientRect();
-        card.style.setProperty('--cx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%');
-        card.style.setProperty('--cy', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%');
+        if (raf) return;
+        raf = requestAnimationFrame(function () {
+          raf = 0;
+          const r = card.getBoundingClientRect();
+          const x = (e.clientX - r.left) / r.width;
+          const y = (e.clientY - r.top) / r.height;
+          card.style.setProperty('--cx', (x * 100).toFixed(1) + '%');
+          card.style.setProperty('--cy', (y * 100).toFixed(1) + '%');
+          card.style.setProperty('--mx', (x * 2 - 1).toFixed(3));
+          card.style.setProperty('--my', (y * 2 - 1).toFixed(3));
+        });
+      });
+      card.addEventListener('mouseleave', function () {
+        card.style.setProperty('--mx', '0');
+        card.style.setProperty('--my', '0');
       });
     });
   };
@@ -761,6 +826,138 @@
     w.addEventListener('resize', function () { plate.resize(); });
   };
 
+  /* ══════════════════════════════════════════════════════════════════════
+     SCENE 11 · typographic choreography
+
+     The hero and the booking headline both rise line by line out of a clipped
+     box. Every other heading on the page simply appeared, which is what made
+     the middle of the document read flatter than its two ends. This gives the
+     whole page one reveal grammar — heading, then its copy, in that order,
+     every time — using the same `.line` mask the two ends already use.
+
+     Reduced motion skips the whole module rather than animating faster: every
+     reveal here starts from a hidden state, and hidden text that never gets
+     its trigger is worse than text that simply arrives.
+     ═══════════════════════════════════════════════════════════════════ */
+  Scenes.type = function () {
+    if (U.reducedMotion) return;
+
+    /* Rebuilds a heading as the `.line > span` markup the hero already uses,
+       so one CSS rule does the masking everywhere. Split on the <br> the
+       markup already carries rather than on measured line boxes — these
+       headings break where the author said they break, at every viewport,
+       and nothing has to be re-split on resize. */
+    function lineWrap(el) {
+      const existing = el.querySelectorAll('.line > span');
+      if (existing.length) return Array.from(existing);
+      el.innerHTML = el.innerHTML
+        .split(/<br\s*\/?>/i)
+        .map(function (part) { return '<span class="line"><span>' + part + '</span></span>'; })
+        .join('');
+      return Array.from(el.querySelectorAll('.line > span'));
+    }
+
+    /* Words, not characters: a word split survives a resize untouched, where
+       lines would have to be measured and rebuilt. Returns null if SplitText
+       never loaded, and the caller falls back to moving the whole block. */
+    function wordsOf(el) {
+      if (!w.SplitText) return null;
+      try {
+        const s = new w.SplitText(el, { type: 'words', wordsClass: 'wd' });
+        return s.words && s.words.length ? s.words : null;
+      } catch (e) { return null; }
+    }
+
+    function headReveal(sel, trigger, start) {
+      const el = document.querySelector(sel);
+      if (!el) return;
+      const lines = lineWrap(el);
+      g.set(lines, { yPercent: 118 });
+      g.to(lines, {
+        yPercent: 0, duration: 1.45, ease: E.mass, stagger: 0.085,
+        scrollTrigger: { trigger: trigger, start: start }
+      });
+    }
+
+    function copyReveal(sel, trigger, start, delay) {
+      const el = document.querySelector(sel);
+      if (!el) return;
+      const ws = wordsOf(el);
+      const st = { trigger: trigger, start: start };
+      if (ws) {
+        g.set(ws, { opacity: 0, yPercent: 46 });
+        g.to(ws, {
+          opacity: 1, yPercent: 0, duration: 0.95, ease: E.mass,
+          stagger: 0.018, delay: delay || 0, scrollTrigger: st
+        });
+      } else {
+        g.from(el, {
+          opacity: 0, y: 26, duration: 1.05, ease: E.mass,
+          delay: delay || 0, scrollTrigger: st
+        });
+      }
+    }
+
+    /* `#services` is the one heading that cannot key off its own section top:
+       the section box starts a viewport early to overlap the hero, so its
+       stage — and this heading with it — is still transparent then. `top top`
+       is the moment the stage pins and begins to dissolve up. */
+    headReveal('.services__head h2', '#services', 'top top');
+    headReveal('.gallery__intro h2', '#gallery',  'top 74%');
+    headReveal('.voices__head h2',   '#voices',   'top 76%');
+    headReveal('.menu__head h2',     '#menu',     'top 76%');
+
+    copyReveal('.gallery__intro .lede', '#gallery', 'top 74%', 0.22);
+    copyReveal('.menu__head .lede',     '#menu',    'top 76%', 0.22);
+    copyReveal('.gallery__outro .lede', '#gallery', 'top 40%', 0);
+
+    // the eyebrow leads the heading in, as a rule drawn left to right
+    const eyebrow = document.querySelector('.menu__head .eyebrow');
+    if (eyebrow) {
+      g.fromTo(eyebrow,
+        { clipPath: 'inset(0 100% 0 0)', opacity: 0 },
+        {
+          clipPath: 'inset(0 0% 0 0)', opacity: 1, duration: 1.1, ease: E.glide,
+          scrollTrigger: { trigger: '#menu', start: 'top 78%' }
+        });
+    }
+
+    // the stat labels travel with the figures they belong to
+    const labels = Array.from(document.querySelectorAll('.stats__grid span'));
+    if (labels.length) {
+      g.from(labels, {
+        opacity: 0, y: 20, duration: 0.95, ease: E.mass, stagger: 0.13, delay: 0.18,
+        scrollTrigger: { trigger: '#stats', start: 'top 74%' }
+      });
+    }
+
+    const footItems = Array.from(document.querySelectorAll('.foot > span'));
+    if (footItems.length) {
+      g.from(footItems, {
+        opacity: 0, y: 16, duration: 0.9, ease: E.mass, stagger: 0.09,
+        scrollTrigger: { trigger: '.foot', start: 'top 96%' }
+      });
+    }
+  };
+
+  /* ══════════════════════════════════════════════════════════════════════
+     SCENE 12 · page chrome
+
+     A hairline that reports how far through the film the reader is. Driven
+     off one document-length ScrollTrigger through a quickSetter, so it costs
+     a single transform write per frame and never allocates a tween.
+     ═══════════════════════════════════════════════════════════════════ */
+  Scenes.chrome = function () {
+    const bar = document.querySelector('.prog i');
+    if (!bar) return;
+    const setX = g.quickSetter(bar, 'scaleX');
+    setX(0);
+    ST.create({
+      start: 0, end: 'max',
+      onUpdate: function (self) { setX(self.progress); }
+    });
+  };
+
   Scenes.init = function (seq, lenis, turnSeq, holoSeq) {
     buildEases();
     const heroPlate = Scenes.hero(seq);
@@ -770,6 +967,8 @@
     Scenes.stats();
     Scenes.menu();
     Scenes.book(seq);
+    Scenes.type();
+    Scenes.chrome();
     g.ticker.add(runLoops);
     return heroPlate;
   };

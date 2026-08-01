@@ -61,6 +61,10 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
 }
 .h-xl{ font-size:clamp(2.1rem, 5.4vw, 5.4rem); line-height:.9; }
 .h-lg{ font-size:clamp(1.9rem, 4.4vw, 4.2rem); line-height:.94; }
+/* These headings mask their lines to reveal them, and .94 puts the line box
+   above the tail of a 'g'. Pad the mask down and pull the same amount back
+   off the margin, so the clip clears the descenders without moving anything. */
+.h-lg .line{ padding-bottom:.16em; margin-bottom:-.16em; }
 .lede{ font-size:clamp(.95rem,1.15vw,1.15rem); line-height:1.55; color:var(--titanium-d); max-width:34ch; }
 
 .eyebrow{
@@ -141,6 +145,22 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   text-transform:uppercase; color:var(--titanium-d); pointer-events:none;
 }
 .scroll-hint i{ display:block; width:1px; height:38px; background:linear-gradient(var(--titanium-d),transparent); }
+
+/* ── scroll progress ──────────────────────────────────────────────────── */
+.prog{
+  position:fixed; z-index:700; top:0; left:0; right:0; height:2px;
+  pointer-events:none; background:rgba(255,255,255,.05);
+  opacity:1; transition:opacity .8s var(--e-out);
+}
+body.is-loading .prog{ opacity:0; }
+.prog i{
+  display:block; height:100%; transform:scaleX(0); transform-origin:0 50%;
+  background:linear-gradient(90deg, var(--crimson), var(--crimson-hi));
+}
+
+/* SplitText writes these; declared here so a word reveal still lays out
+   correctly if the plugin ever loads late */
+.wd{ display:inline-block; }
 
 /* ── opening ────────────────────────────────────────────────── */
 /* 640vh of film plus one viewport of overlap: the last viewport is where the
@@ -371,47 +391,108 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   background:rgba(255,255,255,.08);
   border:1px solid rgba(255,255,255,.08);
 }
-.card{ background:var(--black); position:relative; }
-.card a{
+/* Every hover effect lives inside the cell — nothing moves the cell itself,
+   or the 1px grid it draws would tear open. */
+.card{
+  position:relative; isolation:isolate;
+  background:linear-gradient(180deg, rgba(255,255,255,.03), transparent 46%), var(--black);
+}
+/* the crimson rule that draws across the top edge on approach */
+.card::before{
+  content:""; position:absolute; inset:0 0 auto; height:1px; z-index:2;
+  pointer-events:none; transform:scaleX(0); transform-origin:left;
+  background:linear-gradient(90deg, var(--crimson-hi), rgba(var(--crimson-rgb),0));
+  transition:transform .8s var(--e-out);
+}
+/* the wash under the pointer */
+.card::after{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:0;
+  background:
+    radial-gradient(460px 340px at var(--cx,50%) var(--cy,50%), rgba(var(--crimson-rgb),.13), transparent 68%),
+    linear-gradient(180deg, rgba(255,255,255,.05), transparent 58%);
+  transition:opacity .55s var(--e-out);
+}
+.card__in{
+  -webkit-appearance:none; appearance:none;
+  font:inherit; color:inherit; text-align:left; cursor:pointer;
+  background:none; border:0; width:100%;
   display:flex; flex-direction:column; height:100%;
   padding:clamp(26px,2.5vw,40px);
-  min-height:clamp(230px,22vw,300px);
+  min-height:clamp(240px,23vw,320px);
+  position:relative; z-index:1; overflow:hidden;
 }
+.card__in:focus-visible{ outline:1px solid var(--crimson-hi); outline-offset:-4px; }
+/* one sheen crossing the card, once per hover */
+.card__in::before{
+  content:""; position:absolute; top:0; left:-140%; width:62%; height:100%;
+  background:linear-gradient(105deg, transparent, rgba(255,255,255,.075), transparent);
+  transform:skewX(-14deg); pointer-events:none;
+}
+.card:hover .card__in::before{ animation:cardSheen 1.05s var(--e-out) forwards; }
+@keyframes cardSheen{ to{ left:150%; } }
+
 .card__num{
   font-family:var(--fm); font-size:.6rem; letter-spacing:.3em;
-  color:var(--titanium-d); transition:color .5s var(--e-out);
+  color:var(--titanium-d);
+  transform:translate3d(calc(var(--mx,0) * 3px), calc(var(--my,0) * 3px), 0);
+  transition:color .5s var(--e-out), transform .6s var(--e-out);
 }
 .card h3{
   margin-top:auto; padding-top:34px;
   font-size:clamp(1.3rem,1.9vw,1.85rem); line-height:1.02; letter-spacing:-.03em;
+  transform:translate3d(calc(var(--mx,0) * 7px), calc(var(--my,0) * 5px), 0);
+  transition:transform .6s var(--e-out);
 }
-.card h3 em{ font-style:normal; color:var(--titanium-d); }
+.card h3 em{ font-style:normal; color:var(--titanium-d); transition:color .5s var(--e-out); }
 .card p{
   margin-top:14px; font-size:.82rem; line-height:1.5; color:var(--titanium-d);
-  max-width:34ch; opacity:0; transform:translateY(8px);
+  max-width:34ch; opacity:0; transform:translateY(10px);
   transition:opacity .5s var(--e-out), transform .5s var(--e-out);
 }
+.card__foot{
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  margin-top:22px;
+}
 .card__time{
-  margin-top:20px; align-self:flex-start;
   font-family:var(--fm); font-size:.58rem; letter-spacing:.22em; text-transform:uppercase;
   color:var(--crimson-hi); border:1px solid rgba(var(--crimson-rgb),.32);
   padding:7px 13px; border-radius:999px;
+  transition:background-color .5s var(--e-out), border-color .5s var(--e-out);
 }
-.card::after{
-  content:""; position:absolute; inset:0; pointer-events:none; opacity:0;
-  background:radial-gradient(420px 320px at var(--cx,50%) var(--cy,50%), rgba(var(--crimson-rgb),.10), transparent 70%);
-  transition:opacity .5s var(--e-out);
+.card__go{
+  display:grid; place-items:center; width:32px; height:32px; flex:none;
+  border:1px solid rgba(255,255,255,.14); border-radius:999px;
+  font-family:var(--fm); font-size:.72rem; color:var(--white);
+  opacity:0; transform:translateX(-10px);
+  transition:opacity .5s var(--e-out), transform .5s var(--e-out),
+             border-color .5s var(--e-out), background-color .5s var(--e-out);
 }
+
+.card:hover::before{ transform:scaleX(1); }
 .card:hover::after{ opacity:1; }
 .card:hover .card__num{ color:var(--crimson-hi); }
+.card:hover h3 em{ color:var(--crimson-hi); }
 .card:hover p{ opacity:1; transform:translateY(0); }
+.card:hover .card__time{
+  background:rgba(var(--crimson-rgb),.10); border-color:rgba(var(--crimson-rgb),.55);
+}
+.card:hover .card__go{
+  opacity:1; transform:translateX(0);
+  border-color:rgba(var(--crimson-rgb),.55); background:rgba(var(--crimson-rgb),.10);
+}
+.card__in:active{ transform:scale(.994); transition:transform .2s var(--e-out); }
 
 @media (max-width:1080px){
   .menu__grid{ grid-template-columns:repeat(2,1fr); }
   .card p{ opacity:1; transform:none; }
+  .card__go{ opacity:.5; transform:none; }
 }
 @media (max-width:620px){
   .menu__grid{ grid-template-columns:1fr; }
+}
+@media (prefers-reduced-motion:reduce){
+  .card__in::before{ display:none; }
+  .card__num, .card h3{ transform:none; }
 }
 
 /* ── booking ───────────────────────────────────────────────── */
