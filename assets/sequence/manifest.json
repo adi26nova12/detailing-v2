@@ -1,0 +1,39 @@
+{
+  "source": "three.js bake",
+  "model": "assets/model/bmw-m4.glb",
+  "tool": "tools/bake/index.html",
+  "width": 1600,
+  "height": 900,
+  "supersample": 2,
+  "hero": {
+    "pattern": "assets/sequence/hero/frame_{index}.webp",
+    "pad": 4,
+    "start": 1,
+    "count": 420,
+    "bytes": 11000000,
+    "note": "scenes 1-3: orbit, crane, light rails igniting"
+  },
+  "turn": {
+    "pattern": "assets/sequence/turn/frame_{index}.webp",
+    "pad": 4,
+    "start": 1,
+    "count": 240,
+    "bytes": 8300000,
+    "note": "scene 5: locked-off camera, one full counter-clockwise revolution"
+  },
+  "turnholo": {
+    "pattern": "assets/sequence/turnholo/frame_{index}.webp",
+    "pad": 4,
+    "start": 1,
+    "count": 240,
+    "bytes": 11000000,
+    "note": "scene 5 scan layer; frame n is the same pose as turn frame n"
+  },
+  "scenes": {
+    "reveal": [0.0, 0.2],
+    "orbit": [0.2, 0.46],
+    "coating": [0.17, 0.44],
+    "ignite": [0.46, 0.92],
+    "crane": [0.74, 1.0]
+  }
+}

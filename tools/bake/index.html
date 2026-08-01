@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>APEX — sequence bake</title>
+<style>
+  html,body{margin:0;background:#08090b;color:#b9bdc2;font:13px/1.5 ui-monospace,Menlo,monospace}
+  #wrap{display:flex;flex-direction:column;height:100vh}
+  #stage{flex:1;display:grid;place-items:center;overflow:hidden}
+  canvas{max-width:100%;max-height:100%;box-shadow:0 0 0 1px #1c1f24}
+  #bar{padding:10px 16px;border-top:1px solid #1c1f24;display:flex;gap:20px;align-items:center}
+  b{color:#2fd694;font-weight:400}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="stage"></div>
+  <div id="bar"><span id="status">booting…</span></div>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader }   from 'three/addons/loaders/DRACOLoader.js';
+import { MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import { Reflector }     from 'three/addons/objects/Reflector.js';
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Configuration. The camera keys and the lighting schedule are ports of
+   tools/render_sequence.py, so the scroll choreography the site is already
+   built around survives the change of renderer.
+   ═════════════════════════════════════════════════════════════════════════ */
+const CFG = {
+  model:  '../../assets/model/bmw-m4.glb',
+  sink:   'http://127.0.0.1:5200',
+  frames: 420,
+  width:  1600,
+  height: 900,
+  ss:     2,           // supersample factor; downscaled before encoding
+  quality: 0.84,
+  carLength: 4.80,     // metres — the camera keys assume this scale
+  /* The keys were authored against a narrower stand-in body. The real M8 is
+     2.12 m wide with mirrors, so every shot needs backing off or the nose
+     clips the frame on the wider poses. */
+  dolly: 1.16,
+  paint: 0x0d5f3e,     // metallic emerald
+  envEvery: 3,         // rebuild the IBL every N frames as the rails ignite
+
+  /* The model's exterior shell is authored as carbon fibre, split across these
+     four materials (front half, rear half, rear deck, front bumper). The
+     mirrors — Carbon fiber.003 — stay carbon on purpose: it is a real M detail
+     and it keeps the emerald from flattening the car into one colour. */
+  bodyMaterials: ['Carbon fiber', 'Carbon fiber.001', 'Carbon fiber.002', 'Carbon fiber.004'],
+
+  /* Daytime running lights. Bright emissive alone just clips to a flat white
+     shape; the crispness comes from bloom bleeding it into the surrounding
+     dark, so these two settings belong together. */
+  redLampScale: 0.12,
+
+  /* Scene 5 is a turntable: the camera is locked off and the car rotates on
+     the stage. `dir: -1` spins it counter-clockwise as seen from above. */
+  turn: {
+    count: 240,
+    azimuth: -34,      // fixed camera bearing
+    elevation: 11.5,
+    distance: 7.55,
+    fov: 30,
+    targetY: 0.74,
+    /* +1 spins the model counter-clockwise seen from above: rotating about
+       +Y sends a point at +Z toward +X, and in a bird's-eye view (+X right,
+       +Z down the screen) bottom-to-right is counter-clockwise. Verified by
+       eye too — the nose sweeps left, head-on, then right. */
+    dir: 1,
+    exposure: 1.02
+  },
+
+  /* Scene 5's holographic scan. Baked over the frame range the services
+     section actually shows, from the same camera, so the wireframe registers
+     exactly on the car underneath it. */
+  holo: { from: 176, to: 420, color: 0x39f0ad }
+};
+
+// azimuth°, elevation°, distance, target height, fov°, roll°
+const CAM_KEYS = [
+  [0.00, [-46.0,  2.2, 6.30, 0.62, 31.0, -1.4]],
+  [0.14, [-33.0,  3.4, 6.05, 0.66, 31.5, -1.0]],
+  [0.30, [-12.0,  5.0, 5.80, 0.70, 32.5, -0.5]],
+  [0.46, [ 14.0,  7.2, 6.15, 0.74, 33.5,  0.0]],
+  [0.60, [ 40.0,  8.5, 6.85, 0.78, 33.0,  0.4]],
+  [0.74, [ 64.0, 11.0, 7.40, 0.80, 32.0,  0.7]],
+  [0.88, [ 84.0, 14.5, 7.95, 0.82, 30.5,  0.5]],
+  [1.00, [ 99.0, 18.5, 8.40, 0.84, 29.5,  0.0]]
+];
+
+// azimuth(turns), az spread, elevation(0=up..1=down), height, radiance, tint
+const STRIPS = [
+  { az: 0.00, len: 9.0, y: 4.30, r: 0.16, rad: 34, tint: 0xffffff },
+  { az: 0.25, len: 7.0, y: 4.05, r: 0.13, rad: 22, tint: 0xf6fbff },
+  { az: 0.75, len: 7.0, y: 4.05, r: 0.13, rad: 22, tint: 0xf6fbff },
+  { az: 0.50, len: 6.0, y: 2.70, r: 0.11, rad: 20, tint: 0xe8fff6 },
+  { az: 0.14, len: 3.2, y: 1.55, r: 0.07, rad: 12, tint: 0xfffdf6 },
+  { az: 0.86, len: 3.2, y: 1.55, r: 0.07, rad: 12, tint: 0xfffdf6 },
+  { az: 0.06, len: 11.0, y: 5.40, r: 0.05, rad: 16, tint: 0xd8ffe8 }
+];
+
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const lerp  = (a, b, t) => a + (b - a) * t;
+const smoothstep = (a, b, x) => { const t = clamp((x - a) / (b - a || 1e-6), 0, 1); return t * t * (3 - 2 * t); };
+
+function catmull(keys, t) {
+  const n = keys.length;
+  if (t <= keys[0][0]) return keys[0][1].slice();
+  if (t >= keys[n - 1][0]) return keys[n - 1][1].slice();
+  let i = 0; while (i < n - 2 && keys[i + 1][0] < t) i++;
+  const u = (t - keys[i][0]) / (keys[i + 1][0] - keys[i][0]);
+  const p0 = keys[Math.max(0, i - 1)][1], p1 = keys[i][1];
+  const p2 = keys[i + 1][1], p3 = keys[Math.min(n - 1, i + 2)][1];
+  const u2 = u * u, u3 = u2 * u;
+  return p1.map((_, k) => 0.5 * (2 * p1[k] + (-p0[k] + p2[k]) * u
+    + (2 * p0[k] - 5 * p1[k] + 4 * p2[k] - p3[k]) * u2
+    + (-p0[k] + 3 * p1[k] - 3 * p2[k] + p3[k]) * u3));
+}
+
+/* The rails ignite one at a time; exposure lifts out of darkness; the ceramic
+   coat tightens the clearcoat. Same numbers as the Python schedule. */
+function schedule(t) {
+  const order = [0, 3, 1, 2, 6, 4, 5];
+  const w = new Array(STRIPS.length).fill(0);
+  order.forEach((idx, slot) => {
+    const start = 0.06 + slot * 0.118;
+    w[idx] = smoothstep(start, start + 0.16, t);
+  });
+  w[0] = Math.max(w[0], smoothstep(0, 0.10, t) * 0.10);
+  return {
+    w,
+    exposure: lerp(0.24, 1.05, smoothstep(0.02, 0.62, t)),
+    coat: smoothstep(0.17, 0.44, t)
+  };
+}
+
+/* ── renderer ────────────────────────────────────────────────────────────── */
+const RW = CFG.width * CFG.ss, RH = CFG.height * CFG.ss;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(RW, RH, false);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.domElement.style.width = '100%';
+document.getElementById('stage').appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000000);
+
+const camera = new THREE.PerspectiveCamera(32, CFG.width / CFG.height, 0.1, 400);
+
+/* downscale target — supersampling is the cheapest anti-aliasing there is */
+const out = document.createElement('canvas');
+out.width = CFG.width; out.height = CFG.height;
+const octx = out.getContext('2d');
+octx.imageSmoothingEnabled = true;
+octx.imageSmoothingQuality = 'high';
+
+/* ── studio environment ──────────────────────────────────────────────────── */
+const pmrem = new THREE.PMREMGenerator(renderer);
+pmrem.compileEquirectangularShader();
+
+const envScene = new THREE.Scene();
+envScene.background = new THREE.Color(0x030304);
+const stripMats = [];
+
+STRIPS.forEach((s) => {
+  const mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(s.tint), toneMapped: false });
+  const geo = new THREE.PlaneGeometry(s.len, s.r * 2);
+  const mesh = new THREE.Mesh(geo, mat);
+  const a = s.az * Math.PI * 2;
+  mesh.position.set(Math.cos(a) * 4.2, s.y, Math.sin(a) * 4.2);
+  mesh.lookAt(0, 0.8, 0);
+  envScene.add(mesh);
+  stripMats.push({ mat, base: new THREE.Color(s.tint), rad: s.rad });
+});
+
+// matte walls and a dark floor so reflections have something to fall off into
+const shell = new THREE.Mesh(
+  new THREE.BoxGeometry(26, 12, 26),
+  new THREE.MeshBasicMaterial({ color: 0x05060a, side: THREE.BackSide, toneMapped: false })
+);
+shell.position.y = 4;
+envScene.add(shell);
+
+let envRT = null;
+function buildEnv(weights) {
+  stripMats.forEach((s, i) => {
+    s.mat.color.copy(s.base).multiplyScalar(s.rad * weights[i]);
+  });
+  const next = pmrem.fromScene(envScene, 0.02);
+  if (envRT) envRT.dispose();
+  envRT = next;
+  scene.environment = next.texture;
+}
+
+/* ── practical lights (crisp speculars and the contact shadow) ───────────── */
+const key = new THREE.DirectionalLight(0xffffff, 0);
+key.position.set(1.4, 7.5, 2.4);
+key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048);
+key.shadow.camera.left = -5; key.shadow.camera.right = 5;
+key.shadow.camera.top = 5;   key.shadow.camera.bottom = -5;
+key.shadow.camera.near = 1;  key.shadow.camera.far = 20;
+key.shadow.bias = -0.0012;
+key.shadow.radius = 3;
+scene.add(key);
+
+const rim = new THREE.DirectionalLight(0xdaf6ec, 0);
+rim.position.set(-5.5, 2.6, -4.2);
+scene.add(rim);
+
+const fill = new THREE.DirectionalLight(0xeafff6, 0);
+fill.position.set(3.6, 1.8, -5.0);
+scene.add(fill);
+
+/* ── floor: planar mirror for the wet-concrete reflection ────────────────── */
+const mirror = new Reflector(new THREE.PlaneGeometry(70, 70), {
+  textureWidth: 1024, textureHeight: 1024, color: 0x0a0c0d
+});
+mirror.rotation.x = -Math.PI / 2;
+mirror.position.y = 0;
+scene.add(mirror);
+
+// a shadow-catching sheet just above the mirror keeps contact darkness
+const shadowPlane = new THREE.Mesh(
+  new THREE.PlaneGeometry(40, 40),
+  new THREE.ShadowMaterial({ opacity: 0.72 })
+);
+shadowPlane.rotation.x = -Math.PI / 2;
+shadowPlane.position.y = 0.002;
+shadowPlane.receiveShadow = true;
+scene.add(shadowPlane);
+
+/* ── fog: the volumetric haze the studio needs to read as deep ───────────── */
+const sceneFog = new THREE.FogExp2(0x05070a, 0.030);
+scene.fog = sceneFog;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Model
+   ═════════════════════════════════════════════════════════════════════════ */
+const status = document.getElementById('status');
+const say = (m) => { status.innerHTML = m; };
+
+const draco = new DRACOLoader();
+draco.setDecoderPath('https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/libs/draco/');
+const loader = new GLTFLoader();
+loader.setDRACOLoader(draco);
+loader.setMeshoptDecoder(MeshoptDecoder);
+
+const report = { materials: [], bbox: null, tris: 0 };
+let paintMats = [];
+let lampMats = [];
+let baseRotY = 0;
+
+function prepareModel(root) {
+  // Normalise: sit on the floor, centred, nose down +X, 4.80 m long.
+  root.updateWorldMatrix(true, true);
+  let box = new THREE.Box3().setFromObject(root);
+  let size = box.getSize(new THREE.Vector3());
+
+  // longest horizontal axis is the car's length
+  if (size.z > size.x) root.rotation.y = Math.PI / 2;
+  root.updateWorldMatrix(true, true);
+  box = new THREE.Box3().setFromObject(root);
+  size = box.getSize(new THREE.Vector3());
+
+  const s = CFG.carLength / size.x;
+  root.scale.multiplyScalar(s);
+  root.updateWorldMatrix(true, true);
+  box = new THREE.Box3().setFromObject(root);
+  const c = box.getCenter(new THREE.Vector3());
+  root.position.x -= c.x;
+  root.position.z -= c.z;
+  root.position.y -= box.min.y;
+  root.updateWorldMatrix(true, true);
+
+  report.bbox = new THREE.Box3().setFromObject(root).getSize(new THREE.Vector3()).toArray().map(v => +v.toFixed(3));
+  // remember the orientation normalisation so the turntable can spin from it
+  baseRotY = root.rotation.y;
+
+  // catalogue materials by triangle count so the body panel is identifiable
+  const byMat = new Map();
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true;
+    o.receiveShadow = true;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    mats.forEach((m) => {
+      const g = o.geometry;
+      const tris = (g.index ? g.index.count : g.attributes.position.count) / 3;
+      report.tris += tris;
+      const e = byMat.get(m.uuid) || { name: m.name || '(unnamed)', mat: m, tris: 0 };
+      e.tris += tris;
+      byMat.set(m.uuid, e);
+    });
+  });
+  report.materials = [...byMat.values()]
+    .sort((a, b) => b.tris - a.tris)
+    .map((e) => ({ name: e.name, tris: Math.round(e.tris), type: e.mat.type }));
+  report.matRefs = [...byMat.values()];
+
+  /* The model ships emissive lamps. Scene 1 is lit by nothing else, so their
+     intensity has to climb as the exposure falls or they vanish with
+     everything else. */
+  lampMats = report.matRefs
+    .filter((e) => e.mat.emissive && (e.mat.emissive.r + e.mat.emissive.g + e.mat.emissive.b) > 0.01)
+    .map((e) => {
+      const c = e.mat.emissive;
+      // The palette excludes red. Tail lamps stay dark smoked glass rather
+      // than becoming the only colour in an otherwise black opening frame.
+      const red = c.r > 0.25 && c.r > c.g * 3 && c.r > c.b * 3;
+      return { mat: e.mat, base: (e.mat.emissiveIntensity || 1) * (red ? CFG.redLampScale : 1), red };
+    });
+  report.lamps = lampMats.length;
+  return root;
+}
+
+/* Repaint the body. Anything that is the car's exterior shell gets the emerald
+   metallic + clearcoat treatment; the model's own carbon, glass, rubber and
+   chrome are left exactly as authored. */
+function applyPaint(names) {
+  paintMats = [];
+  report.matRefs.forEach((e) => {
+    if (!names.includes(e.name)) return;
+    const m = e.mat;
+    m.color = new THREE.Color(CFG.paint);
+    // The authored body is carbon weave; the texture has to go or it tints
+    // and dulls the basecoat instead of reading as paint.
+    m.map = null;
+    if (m.roughnessMap) m.roughnessMap = null;
+    if (m.metalnessMap) m.metalnessMap = null;
+    // the weave also lives in the normal map, and a twill pattern under a
+    // mirror clearcoat reads as carbon no matter what colour sits beneath it
+    if (m.normalMap) m.normalMap = null;
+    m.metalness = 0.88;
+    m.roughness = 0.24;
+    if ('clearcoat' in m) { m.clearcoat = 1.0; m.clearcoatRoughness = 0.06; }
+    m.envMapIntensity = 1.35;
+    m.needsUpdate = true;
+    paintMats.push(m);
+  });
+  return paintMats.length;
+}
+
+/* Flash one material bright so it can be identified in a preview render. */
+const isoCache = new Map();
+function isolate(name) {
+  report.matRefs.forEach((e) => {
+    if (!isoCache.has(e.mat.uuid)) isoCache.set(e.mat.uuid, e.mat.emissive ? e.mat.emissive.clone() : null);
+    if (!e.mat.emissive) return;
+    e.mat.emissive.set(e.name === name ? 0xff00ff : 0x000000);
+    e.mat.emissiveIntensity = e.name === name ? 4 : 0;
+    e.mat.needsUpdate = true;
+  });
+}
+function isolateOff() {
+  report.matRefs.forEach((e) => {
+    const c = isoCache.get(e.mat.uuid);
+    if (e.mat.emissive && c) e.mat.emissive.copy(c);
+    else if (e.mat.emissive) e.mat.emissive.set(0x000000);
+    e.mat.emissiveIntensity = 1;
+    e.mat.needsUpdate = true;
+  });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Hologram pass
+
+   The same car, same camera, rendered as a scanned surface: a fresnel rim so
+   the form reads from its silhouette, plus fine horizontal scan lines. The
+   travelling scan band is deliberately NOT baked in — the site sweeps it with
+   a mask so the scan follows scroll position and reverses with it.
+   ═════════════════════════════════════════════════════════════════════════ */
+const holoMaterial = new THREE.ShaderMaterial({
+  uniforms: {
+    uColor: { value: new THREE.Color(CFG.holo.color) },
+    uMinY:  { value: 0 },
+    uMaxY:  { value: 1.5 }
+  },
+  vertexShader: `
+    varying vec3 vNormalV;
+    varying vec3 vViewPos;
+    varying vec3 vWorld;
+    void main() {
+      vNormalV = normalize(normalMatrix * normal);
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      vViewPos = mv.xyz;
+      vWorld = (modelMatrix * vec4(position, 1.0)).xyz;
+      gl_Position = projectionMatrix * mv;
+    }`,
+  fragmentShader: `
+    uniform vec3 uColor;
+    uniform float uMinY;
+    uniform float uMaxY;
+    varying vec3 vNormalV;
+    varying vec3 vViewPos;
+    varying vec3 vWorld;
+    void main() {
+      vec3 N = normalize(vNormalV);
+      vec3 V = normalize(-vViewPos);
+      float fres = pow(1.0 - abs(dot(N, V)), 2.4);
+
+      // fine horizontal scan lines climbing the body
+      float h = (vWorld.y - uMinY) / max(uMaxY - uMinY, 0.001);
+      float lines = 0.5 + 0.5 * sin(h * 190.0);
+      lines = mix(0.55, 1.0, lines);
+
+      // a faint fill so flat panels still read, and the rim carries the form
+      float fill = 0.055 + 0.30 * pow(max(dot(N, V), 0.0), 3.0);
+
+      vec3 col = uColor * (fres * 2.3 + fill) * lines;
+      gl_FragColor = vec4(col, 1.0);
+    }`,
+  side: THREE.FrontSide
+});
+
+let holoOn = false;
+const savedMaterials = new Map();
+
+function setHologram(on) {
+  if (on === holoOn) return;
+  holoOn = on;
+
+  modelRoot.traverse((o) => {
+    if (!o.isMesh) return;
+    if (on) {
+      if (!savedMaterials.has(o.uuid)) savedMaterials.set(o.uuid, o.material);
+      o.material = holoMaterial;
+      o.castShadow = false;
+    } else {
+      const m = savedMaterials.get(o.uuid);
+      if (m) o.material = m;
+      o.castShadow = true;
+    }
+  });
+
+  // the hologram is a read-out of the car, not a photograph of the room
+  mirror.visible = !on;
+  shadowPlane.visible = !on;
+  scene.environment = on ? null : (envRT ? envRT.texture : null);
+  scene.fog = on ? null : sceneFog;
+  key.visible = rim.visible = fill.visible = !on;
+}
+
+let modelRoot = null;
+
+const ready = new Promise((resolve, reject) => {
+  say('loading model…');
+  loader.load(CFG.model, (gltf) => {
+    modelRoot = prepareModel(gltf.scene);
+    scene.add(modelRoot);
+    applyPaint(CFG.bodyMaterials);
+    buildEnv(schedule(0).w);
+    say(`model ready — ${Math.round(report.tris / 1000)}k tris, bbox ${report.bbox.join(' × ')}, `
+      + `${paintMats.length} body panels repainted, ${report.lamps} emissive lamps`);
+    resolve(report);
+  }, undefined, reject);
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Frame rendering
+   ═════════════════════════════════════════════════════════════════════════ */
+function poseCamera(t) {
+  const [az, el, dist0, ty, fov, roll] = catmull(CAM_KEYS, t);
+  const dist = dist0 * CFG.dolly;
+  const a = az * Math.PI / 180, e = el * Math.PI / 180;
+  camera.position.set(
+    Math.cos(a) * Math.cos(e) * dist,
+    Math.sin(e) * dist + ty,
+    Math.sin(a) * Math.cos(e) * dist
+  );
+  camera.fov = fov;
+  camera.lookAt(0.10, ty, 0);
+  camera.rotateZ(roll * Math.PI / 180);
+  camera.updateProjectionMatrix();
+}
+
+let lastEnvFrame = -99;
+
+function renderFrame(i) {
+  const t = i / (CFG.frames - 1);
+  const s = schedule(t);
+
+  if (i - lastEnvFrame >= CFG.envEvery || i === 0) {
+    buildEnv(s.w);
+    lastEnvFrame = i;
+  }
+
+  key.intensity  = 2.6 * s.w[0];
+  rim.intensity  = 3.4 * s.w[3];
+  fill.intensity = 1.5 * s.w[4];
+
+  // ceramic coating: the clearcoat tightens and the flake settles
+  paintMats.forEach((m) => {
+    m.roughness = lerp(0.42, 0.20, s.coat);
+    if ('clearcoatRoughness' in m) m.clearcoatRoughness = lerp(0.30, 0.015, s.coat);
+  });
+
+  const dark = 1 - smoothstep(0.02, 0.40, t);
+  lampMats.forEach((l) => { l.mat.emissiveIntensity = l.base * (1 + (l.red ? 0 : 9) * dark); });
+
+  if (scene.fog) scene.fog.density = lerp(0.055, 0.024, smoothstep(0.1, 0.7, t));
+  renderer.toneMappingExposure = s.exposure;
+
+  poseCamera(t);
+  renderer.render(scene, camera);
+
+  octx.clearRect(0, 0, CFG.width, CFG.height);
+  octx.drawImage(renderer.domElement, 0, 0, CFG.width, CFG.height);
+  return out.toDataURL('image/webp', CFG.quality).slice(23);
+}
+
+/* The hologram shares the camera but not the lighting schedule: it must read
+   evenly across the whole services block, so exposure is held flat. */
+function renderHoloFrame(i) {
+  const t = i / (CFG.frames - 1);
+  renderer.toneMappingExposure = 1.0;
+  poseCamera(t);
+  renderer.render(scene, camera);
+  octx.clearRect(0, 0, CFG.width, CFG.height);
+  octx.drawImage(renderer.domElement, 0, 0, CFG.width, CFG.height);
+  return out.toDataURL('image/webp', CFG.quality).slice(23);
+}
+
+/* ── turntable ───────────────────────────────────────────────────────────
+   Camera locked off, car rotating on the stage. Lighting is held at the full
+   rig so the section reads evenly however far the visitor has scrolled. */
+function poseTurnCamera() {
+  const T = CFG.turn;
+  const a = T.azimuth * Math.PI / 180, e = T.elevation * Math.PI / 180;
+  camera.position.set(
+    Math.cos(a) * Math.cos(e) * T.distance,
+    Math.sin(e) * T.distance + T.targetY,
+    Math.sin(a) * Math.cos(e) * T.distance
+  );
+  camera.fov = T.fov;
+  camera.lookAt(0, T.targetY, 0);
+  camera.updateProjectionMatrix();
+}
+
+function renderTurnFrame(i, holo) {
+  const T = CFG.turn;
+  modelRoot.rotation.y = baseRotY + T.dir * (i / T.count) * Math.PI * 2;
+  modelRoot.updateWorldMatrix(true, true);
+
+  renderer.toneMappingExposure = holo ? 1.0 : T.exposure;
+  if (!holo && scene.fog) scene.fog.density = 0.026;
+
+  poseTurnCamera();
+  renderer.render(scene, camera);
+
+  octx.clearRect(0, 0, CFG.width, CFG.height);
+  octx.drawImage(renderer.domElement, 0, 0, CFG.width, CFG.height);
+  return out.toDataURL('image/webp', CFG.quality).slice(23);
+}
+
+/* A single dropped connection used to abort a whole bake hundreds of frames
+   in, so a frame is retried before the run is given up on. */
+async function sendFrame(n, data, dir) {
+  const name = 'frame_' + String(n).padStart(4, '0') + '.webp';
+  const body = JSON.stringify({ name, data, dir: dir || 'hero' });
+  let last;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const r = await fetch(CFG.sink, { method: 'POST', body });
+      if (r.ok) return;
+      last = new Error('sink ' + r.status);
+    } catch (e) {
+      last = e;
+    }
+    await new Promise(function (res) { setTimeout(res, 250 * (attempt + 1)); });
+  }
+  throw new Error('frame ' + name + ' failed: ' + last.message);
+}
+
+/* Driven in batches from the outside — requestAnimationFrame and setTimeout
+   are both throttled in a background tab, but toDataURL is synchronous and
+   fetch is not timer-based, so a batch runs at full speed either way. */
+window.BAKE = {
+  cfg: CFG,
+  report: () => report,
+  ready,
+  paint: applyPaint,
+  isolate, isolateOff,
+  preview: (t) => { const s = schedule(t); buildEnv(s.w); lastEnvFrame = -99; return renderFrame(Math.round(t * (CFG.frames - 1))).length; },
+  async run(from, to) {
+    setHologram(false);
+    const start = performance.now();
+    for (let i = from; i < to; i++) {
+      await sendFrame(i + 1, renderFrame(i), 'hero');
+    }
+    const ms = performance.now() - start;
+    say(`baked hero ${from}–${to - 1} · ${(ms / (to - from)).toFixed(0)} ms/frame`);
+    return { from, to, msPerFrame: +(ms / (to - from)).toFixed(1) };
+  },
+
+  /* Numbered from 1 within its own range, so the site maps
+     holoIndex = heroIndex - CFG.holo.from. */
+  async runHolo() {
+    const { from, to } = CFG.holo;
+    const box = new THREE.Box3().setFromObject(modelRoot);
+    holoMaterial.uniforms.uMinY.value = box.min.y;
+    holoMaterial.uniforms.uMaxY.value = box.max.y;
+    setHologram(true);
+    const start = performance.now();
+    for (let i = from; i < to; i++) {
+      await sendFrame(i - from + 1, renderHoloFrame(i), 'holo');
+    }
+    setHologram(false);
+    const ms = performance.now() - start;
+    say(`baked holo ${from}–${to - 1} (${to - from} frames) · ${(ms / (to - from)).toFixed(0)} ms/frame`);
+    return { count: to - from, msPerFrame: +(ms / (to - from)).toFixed(1) };
+  },
+
+  /* Scene 5's turntable, and the matching scan layer. Both spin the model on
+     the same locked-off camera, so turn frame n and turnholo frame n are the
+     same pose and the overlay registers. */
+  async runTurn(holo) {
+    const T = CFG.turn;
+    if (holo) {
+      const box = new THREE.Box3().setFromObject(modelRoot);
+      holoMaterial.uniforms.uMinY.value = box.min.y;
+      holoMaterial.uniforms.uMaxY.value = box.max.y;
+    }
+    setHologram(!!holo);
+    if (!holo) buildEnv(new Array(STRIPS.length).fill(1));
+
+    const start = performance.now();
+    for (let i = 0; i < T.count; i++) {
+      await sendFrame(i + 1, renderTurnFrame(i, holo), holo ? 'turnholo' : 'turn');
+    }
+    setHologram(false);
+    modelRoot.rotation.y = baseRotY;
+    lastEnvFrame = -99;
+
+    const ms = performance.now() - start;
+    say(`baked ${holo ? 'turnholo' : 'turn'} · ${T.count} frames · ${(ms / T.count).toFixed(0)} ms/frame`);
+    return { count: T.count, msPerFrame: +(ms / T.count).toFixed(1) };
+  },
+
+  turnPreview(i, holo) {
+    if (holo) {
+      const box = new THREE.Box3().setFromObject(modelRoot);
+      holoMaterial.uniforms.uMinY.value = box.min.y;
+      holoMaterial.uniforms.uMaxY.value = box.max.y;
+    }
+    setHologram(!!holo);
+    if (!holo) buildEnv(new Array(STRIPS.length).fill(1));
+    return renderTurnFrame(i, holo).length;
+  },
+
+  holo: setHologram
+};
+
+ready.then(() => say(status.textContent + ' — call BAKE.run(0, 420)'))
+     .catch((e) => say('load failed: ' + e.message));
+</script>
+</body>
+</html>

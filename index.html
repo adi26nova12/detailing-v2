@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>APEX — Detail Studio · Melbourne</title>
+<meta name="description" content="Ceramic coating, paint correction and paint protection film for collectors. A private detailing studio in Melbourne.">
+<meta name="theme-color" content="#050506">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap">
+<link rel="stylesheet" href="css/main.css">
+</head>
+
+<body class="is-loading">
+
+<!-- ─────────────────────────────  PRELOADER  ───────────────────────────── -->
+<div class="loader" id="loader" aria-hidden="true">
+  <div class="loader__inner">
+    <svg class="loader__mark" viewBox="0 0 240 120" fill="none" aria-hidden="true">
+      <path class="loader__stroke" d="M18 102 L60 18 L102 102" />
+      <path class="loader__stroke" d="M36 74 L84 74" />
+      <path class="loader__stroke" d="M132 102 L132 18 L176 18 Q206 18 206 44 Q206 70 176 70 L132 70" />
+      <path class="loader__stroke" d="M170 70 L214 102" />
+    </svg>
+    <div class="loader__meta">
+      <span class="loader__label">Calibrating studio lighting</span>
+      <span class="loader__count" id="loaderCount">00</span>
+    </div>
+    <div class="loader__bar"><i id="loaderBar"></i></div>
+  </div>
+  <div class="loader__curtain"></div>
+</div>
+
+<!-- ─────────────────────────────  CHROME  ──────────────────────────────── -->
+<header class="nav" id="nav">
+  <a class="nav__brand" href="#hero">
+    <span class="nav__mark">APEX</span>
+    <span class="nav__sub">Detail Studio — Melbourne</span>
+  </a>
+  <nav class="nav__links">
+    <a href="#services">Services</a>
+    <a href="#gallery">Work</a>
+    <a href="#menu">Consult</a>
+    <a class="nav__cta" href="#book" data-magnetic>Book</a>
+  </nav>
+</header>
+
+<div class="scroll-hint" id="scrollHint" aria-hidden="true">
+  <span>Scroll</span><i></i>
+</div>
+
+<main id="smooth-content">
+
+<!-- ═══════════════ SCENE 1–3 · DISCOVERY ═══════════════ -->
+<section class="hero" id="hero">
+  <div class="hero__stage">
+    <canvas class="hero__canvas" id="heroCanvas"></canvas>
+    <div class="hero__grain"></div>
+    <div class="hero__vignette"></div>
+
+    <div class="hero__caption hero__caption--a" data-hero-cap="0">
+      <span class="eyebrow">Bay 01 — Ambient</span>
+      <p>Somewhere in the dark, four hundred hours of work is waiting to be found.</p>
+    </div>
+
+    <div class="hero__caption hero__caption--b" data-hero-cap="1">
+      <span class="eyebrow">Bay 02 — Correction</span>
+      <p>Nine thousand micro-scratches. Removed, not filled.</p>
+    </div>
+
+    <div class="hero__type" id="heroType">
+      <h1 class="display">
+        <span class="line"><span>Perfection isn't washed.</span></span>
+        <span class="line"><span>It's engineered.</span></span>
+      </h1>
+      <div class="hero__type-meta">
+        <span>Est. 2019</span><span>Cremorne, VIC</span><span>By appointment</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SCENE 4 · PAINT INSPECTION ═══════════════ -->
+<section class="inspect" id="inspect">
+  <div class="inspect__stage">
+    <canvas class="inspect__plate" id="inspectPlate"></canvas>
+    <canvas class="inspect__fx" id="inspectFx"></canvas>
+    <div class="inspect__scrim"></div>
+
+    <div class="inspect__head">
+      <span class="eyebrow">Scene 04 — Surface analysis</span>
+      <h2 class="h-lg">Move across the panel.</h2>
+    </div>
+
+    <ul class="inspect__readout" id="inspectReadout">
+      <li data-metric="depth"><span>Paint depth</span><b>0</b><i>µm</i></li>
+      <li data-metric="gloss"><span>Gloss</span><b>0</b><i>GU</i></li>
+      <li data-metric="reflect"><span>Reflection (DOI)</span><b>0</b><i>%</i></li>
+      <li data-metric="water"><span>Water repellency</span><b>0</b><i>°</i></li>
+      <li data-metric="contam"><span>Contamination</span><b>0</b><i>%</i></li>
+      <li data-metric="swirl"><span>Swirl density</span><b>0</b><i>/cm²</i></li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═══════════════ SCENE 5 · SERVICES ═══════════════ -->
+<section class="services" id="services">
+  <div class="services__stage">
+    <div class="services__viewport">
+      <canvas class="services__plate" id="servicePlate"></canvas>
+      <canvas class="services__holo" id="serviceHolo"></canvas>
+      <canvas class="services__fx" id="serviceFx"></canvas>
+      <div class="services__film" id="serviceFilm"></div>
+      <div class="services__cabin" id="serviceCabin"></div>
+      <div class="services__scrim"></div>
+    </div>
+
+    <div class="services__head">
+      <span class="eyebrow">Scene 05 — The stage</span>
+      <h2 class="h-lg">Everything<br>we do.</h2>
+    </div>
+
+    <ol class="svc-menu" id="svcMenu">
+      <li class="svc-item" data-mood="film">
+        <span class="svc-item__num">01</span>
+        <span class="svc-item__name">Paint Protection Film <em>(PPF)</em></span>
+        <span class="svc-item__note">Invisible armour, wrapped at every edge</span>
+        <i class="svc-item__rule"></i>
+      </li>
+      <li class="svc-item" data-mood="beads">
+        <span class="svc-item__num">02</span>
+        <span class="svc-item__name">Ceramic Coating</span>
+        <span class="svc-item__note">9H &middot; water forgets how to hold on</span>
+        <i class="svc-item__rule"></i>
+      </li>
+      <li class="svc-item" data-mood="tint">
+        <span class="svc-item__num">03</span>
+        <span class="svc-item__name">Window Tinting</span>
+        <span class="svc-item__note">Legal VLT, serious heat rejection</span>
+        <i class="svc-item__rule"></i>
+      </li>
+      <li class="svc-item" data-mood="swirl">
+        <span class="svc-item__num">04</span>
+        <span class="svc-item__name">Car Detailing</span>
+        <span class="svc-item__note">Correction until the reflection is a mirror</span>
+        <i class="svc-item__rule"></i>
+      </li>
+      <li class="svc-item" data-mood="package">
+        <span class="svc-item__num">05</span>
+        <span class="svc-item__name">New Car Package</span>
+        <span class="svc-item__note">Specified before delivery &mdash; protected, never corrected</span>
+        <i class="svc-item__rule"></i>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ═══════════════ SCENE 6 · COMPARISON ═══════════════ -->
+<section class="compare" id="compare">
+  <div class="compare__head">
+    <span class="eyebrow">Scene 06 — Before / After</span>
+    <h2 class="h-lg">Drag the line.</h2>
+  </div>
+  <div class="compare__stage" id="compareStage">
+    <canvas class="compare__plate compare__plate--after"  id="compareAfter"></canvas>
+    <div class="compare__clip" id="compareClip">
+      <canvas class="compare__plate compare__plate--before" id="compareBefore"></canvas>
+      <div class="compare__tags compare__tags--before">
+        <span>Oxidation</span><span>Water spots</span><span>Swirl marks</span>
+      </div>
+    </div>
+    <div class="compare__tags compare__tags--after">
+      <span>Ceramic 9H</span><span>Mirror DOI</span><span>Ultra gloss</span>
+    </div>
+    <div class="compare__handle" id="compareHandle">
+      <i></i><span class="compare__grip"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SCENE 7 · GALLERY ═══════════════ -->
+<section class="gallery" id="gallery">
+  <div class="gallery__track" id="galleryTrack">
+    <div class="gallery__intro">
+      <span class="eyebrow">Scene 07</span>
+      <h2 class="h-lg">Selected<br>commissions.</h2>
+      <p class="lede">Six of the two hundred and twelve cars that left this studio last year.</p>
+    </div>
+
+    <article class="shot" data-shot="0">
+      <canvas class="shot__plate"></canvas>
+      <div class="shot__mask"></div>
+      <div class="shot__meta"><span>01 / Toorak</span><h3>M4 Competition</h3><p>Stage 3 correction · 9H ceramic</p></div>
+    </article>
+    <article class="shot" data-shot="1">
+      <canvas class="shot__plate"></canvas>
+      <div class="shot__mask"></div>
+      <div class="shot__meta"><span>02 / Brighton</span><h3>992 Turbo S</h3><p>Full body PPF · gloss</p></div>
+    </article>
+    <article class="shot" data-shot="2">
+      <canvas class="shot__plate"></canvas>
+      <div class="shot__mask"></div>
+      <div class="shot__meta"><span>03 / Kew</span><h3>Continental GT</h3><p>Leather restoration · coating</p></div>
+    </article>
+    <article class="shot" data-shot="3">
+      <canvas class="shot__plate"></canvas>
+      <div class="shot__mask"></div>
+      <div class="shot__meta"><span>04 / South Yarra</span><h3>AMG GT Black Series</h3><p>Track prep · wheel-off detail</p></div>
+    </article>
+    <article class="shot" data-shot="4">
+      <canvas class="shot__plate"></canvas>
+      <div class="shot__mask"></div>
+      <div class="shot__meta"><span>05 / Albert Park</span><h3>Huracán STO</h3><p>Paint correction · engine bay</p></div>
+    </article>
+    <div class="gallery__outro">
+      <p class="lede">The rest live in the archive.</p>
+      <a class="link-arrow" href="#book" data-magnetic>Request the archive</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ SCENE 8 · TESTIMONIALS ═══════════════ -->
+<section class="voices" id="voices">
+  <div class="voices__head">
+    <span class="eyebrow">Scene 08 — Clients</span>
+    <h2 class="h-lg">Quiet<br>referrals.</h2>
+  </div>
+  <div class="voices__field" id="voicesField">
+    <figure class="glass" data-depth="0.9">
+      <blockquote>They found swirls I'd never seen in four years of ownership. Then they made them stop existing.</blockquote>
+      <figcaption><b>D. Whitmore</b><span>992 Turbo S · Brighton</span></figcaption>
+    </figure>
+    <figure class="glass" data-depth="1.4">
+      <blockquote>The car came back looking wet. It has not stopped looking wet.</blockquote>
+      <figcaption><b>A. Nakamura</b><span>M4 Competition · Toorak</span></figcaption>
+    </figure>
+    <figure class="glass" data-depth="0.6">
+      <blockquote>Booked for a coating. Stayed for the fact they photograph every panel before touching it.</blockquote>
+      <figcaption><b>S. Delaney</b><span>Continental GT · Kew</span></figcaption>
+    </figure>
+    <figure class="glass" data-depth="1.15">
+      <blockquote>Three cars now. I no longer get quotes from anyone else.</blockquote>
+      <figcaption><b>M. Iarossi</b><span>Huracán STO · Albert Park</span></figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ═══════════════ SCENE 9 · STATISTICS ═══════════════ -->
+<section class="stats" id="stats">
+  <ul class="stats__grid">
+    <li><b class="stats__num" data-to="500" data-suffix="+">0</b><span>Cars detailed</span></li>
+    <li><b class="stats__num" data-to="98"  data-suffix="%">0</b><span>Repeat clients</span></li>
+    <li><b class="stats__num" data-to="7"   data-suffix="+">0</b><span>Years experience</span></li>
+    <li><b class="stats__num" data-to="4.9" data-suffix="★" data-decimals="1">0</b><span>Google rating</span></li>
+  </ul>
+</section>
+
+<!-- ═══════════════ CONSULTATION MENU ═══════════════ -->
+<section class="menu" id="menu">
+  <div class="menu__head">
+    <span class="eyebrow">Consultations</span>
+    <h2 class="h-lg">Pick a slot.</h2>
+    <p class="lede">Fifteen minutes, in the studio or on a call. We look at the car, you get a fixed quote.</p>
+  </div>
+
+  <ul class="menu__grid" id="menuGrid">
+    <li class="card" data-magnetic>
+      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20Paint%20Protection%20Film">
+        <span class="card__num">01</span>
+        <h3>Paint Protection<br>Film <em>(PPF)</em></h3>
+        <p>Coverage options, edge wrapping, what the film hides and what it doesn't.</p>
+        <span class="card__time">15 min</span>
+      </a>
+    </li>
+    <li class="card" data-magnetic>
+      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20Ceramic%20Coating">
+        <span class="card__num">02</span>
+        <h3>Ceramic<br>Coating</h3>
+        <p>System, expected life on your paint, and the prep the finish actually depends on.</p>
+        <span class="card__time">15 min</span>
+      </a>
+    </li>
+    <li class="card" data-magnetic>
+      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20Window%20Tinting">
+        <span class="card__num">03</span>
+        <h3>Window<br>Tinting</h3>
+        <p>Legal VLT for Victoria, heat rejection, and how the glass reads once it's done.</p>
+        <span class="card__time">15 min</span>
+      </a>
+    </li>
+    <li class="card" data-magnetic>
+      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20Car%20Detailing">
+        <span class="card__num">04</span>
+        <h3>Car<br>Detailing</h3>
+        <p>Correction stages, interior scope, and how long the car stays with us.</p>
+        <span class="card__time">15 min</span>
+      </a>
+    </li>
+    <li class="card card--wide" data-magnetic>
+      <a href="mailto:studio@apexdetail.com.au?subject=Consultation%20—%20New%20Car%20Package">
+        <span class="card__num">05</span>
+        <h3>New Car Package</h3>
+        <p>Film, coating and tint specified together before delivery — so the paint is never
+           corrected, only protected.</p>
+        <span class="card__time">Package</span>
+      </a>
+    </li>
+  </ul>
+</section>
+
+<!-- ═══════════════ SCENE 10 · BOOKING ═══════════════ -->
+<section class="book" id="book">
+  <canvas class="book__plate" id="bookPlate"></canvas>
+  <div class="book__glow"></div>
+  <svg class="book__path" viewBox="0 0 1200 600" aria-hidden="true" preserveAspectRatio="none">
+    <path id="sweepPath" d="M -80 372 C 220 300, 400 262, 620 268 S 1010 320, 1280 386" fill="none"/>
+  </svg>
+  <i class="book__spark" id="bookSpark" aria-hidden="true"></i>
+  <div class="book__inner">
+    <span class="eyebrow">Scene 10 — Enquiry</span>
+    <h2 class="display display--book">
+      <span class="line"><span>Bring us</span></span>
+      <span class="line"><span>something worth</span></span>
+      <span class="line"><span>the hours.</span></span>
+    </h2>
+    <a class="cta" href="mailto:studio@apexdetail.com.au?subject=Detail%20booking" data-magnetic>
+      <span class="cta__pulse"></span>
+      <span class="cta__label">Book Your Detail</span>
+    </a>
+    <div class="book__meta">
+      <div><span>Studio</span><b>14 Dunstan Ave, Cremorne VIC 3121</b></div>
+      <div><span>Hours</span><b>Mon–Sat · by appointment</b></div>
+      <div><span>Contact</span><b>studio@apexdetail.com.au</b></div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <span>APEX Detail Studio</span>
+  <span>Melbourne, Australia</span>
+  <span id="footClock">—</span>
+</footer>
+
+</main>
+
+<!-- GSAP 3.13 — every plugin below is on the free CDN -->
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Observer.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Draggable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/InertiaPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/Flip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/MotionPathPlugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/CustomEase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
+
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/sequence.js"></script>
+<script src="js/preloader.js"></script>
+<script src="js/scenes.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

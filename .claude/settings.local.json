@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la \"C:/Users/adi26/OneDrive/Desktop/detailing v6\" 2>/dev/null; echo \"---VIDEO---\"; ls -la \"C:/Users/adi26/Downloads/when_the_scroll_is_down_everyt.mp4\" 2>/dev/null)",
+      "Bash(ffprobe -v error -show_entries format=duration,size -show_entries stream=width,height,r_frame_rate,codec_name -of default=noprint_wrappers=1 \"C:/Users/adi26/Downloads/when_the_scroll_is_down_everyt.mp4\")",
+      "Bash(python -c \"import cv2; print\\('cv2', cv2.__version__\\)\")",
+      "Bash(python -c \"import PIL; print\\('PIL', PIL.__version__\\)\")",
+      "Bash(python -c \"import imageio_ffmpeg; print\\(imageio_ffmpeg.get_ffmpeg_exe\\(\\)\\)\")",
+      "Bash(python -m pip install imageio-ffmpeg --quiet)",
+      "mcp__becce52d-ca36-4886-8e8d-a6c1cd4f6a3e__balance",
+      "Bash(python -m venv venv)",
+      "Bash(./venv/Scripts/python.exe -m pip install imageio-ffmpeg --quiet)",
+      "Bash(./venv/Scripts/python.exe -c \"import imageio_ffmpeg; print\\(imageio_ffmpeg.get_ffmpeg_exe\\(\\)\\)\")",
+      "Bash(./venv/bin/python.exe -m pip install imageio-ffmpeg --quiet)",
+      "Bash(./venv/bin/python.exe -c \"import imageio_ffmpeg; print\\(imageio_ffmpeg.get_ffmpeg_exe\\(\\)\\)\")",
+      "Bash(winget install *)",
+      "Bash(python -c \"import numpy; print\\('numpy', numpy.__version__\\)\")",
+      "Bash(python -c \"import scipy; print\\('scipy', scipy.__version__\\)\")",
+      "PowerShell(winget install --id Gyan.FFmpeg -e --accept-source-agreements --accept-package-agreements --disable-interactivity --scope user 2>&1)",
+      "Bash(time python tools/render_sequence.py --frames 420 --width 960 --start 0 --end 1 --out \"C:/Users/adi26/AppData/Local/Temp/claude/C--Users-adi26-OneDrive-Desktop-detailing-v6/7037ad41-2277-4813-8909-e00fd052f32e/scratchpad/test\")"
+    ]
+  }
+}
