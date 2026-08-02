@@ -841,3 +841,52 @@ body.is-modal{ overflow:hidden; }
 @media (prefers-reduced-motion:reduce){
   .bk-svc__flip{ transition:none; }
 }
+
+/* ── phones ───────────────────────────────────────────────────────────────
+   Everything below is width-triggered only. The layout already collapses to
+   single columns further up; what is left are the two things that do not
+   scale down on their own — mono labels set in fixed rem, which land at
+   8–10px on a phone, and controls sized for a cursor rather than a thumb. */
+@media (max-width:620px){
+  /* Type floor. The tracking comes in a little as the sizes go up, or the
+     longer uppercase strings stop fitting the narrower measure. */
+  .nav__sub{ font-size:.62rem; letter-spacing:.18em; }
+  .eyebrow{ font-size:.7rem; letter-spacing:.24em; }
+  .svc-item__num,
+  .card__num{ font-size:.68rem; letter-spacing:.22em; }
+  .card__time{ font-size:.66rem; letter-spacing:.16em; }
+  .stats__grid span{ font-size:.66rem; letter-spacing:.16em; }
+  .shot__meta span{ font-size:.66rem; letter-spacing:.18em; }
+  .book__meta span{ font-size:.64rem; letter-spacing:.18em; }
+  .foot{ font-size:.64rem; letter-spacing:.14em; }
+  .bk__sub,
+  .bk-svc__num{ font-size:.66rem; letter-spacing:.18em; }
+  .bk-svc__lead,
+  .bk-svc__hint{ font-size:.64rem; letter-spacing:.12em; }
+  .hero__type-meta span{ font-size:.64rem; letter-spacing:.16em; }
+  .glass figcaption span{ font-size:.66rem; letter-spacing:.14em; }
+  .scroll-hint{ font-size:.62rem; letter-spacing:.24em; }
+  /* four step labels share the dialog's width, so the tracking gives way
+     before the size does */
+  .bk__rail span{ font-size:.64rem; letter-spacing:.1em; }
+
+  /* Thumb-sized controls. 44px is the smallest target that does not get
+     mis-tapped; these were between 18 and 38. */
+  .nav__cta{ padding:15px 20px; }
+  .bk__close{ width:44px; height:44px; }
+  .bk-svc__turn{ width:32px; height:32px; bottom:11px; right:11px; }
+  /* the rule under it is the visual, so the height goes on as padding rather
+     than as a min-height that would push the underline away from the words */
+  .link-arrow{ padding-top:13px; padding-bottom:14px; }
+  /* the phone number and email are the two things anyone actually taps here */
+  .book__meta a{ display:inline-block; padding:10px 0; }
+}
+
+/* The horizontal gallery is sized in vw for a wide screen: at 390px that left
+   the intro copy in a 148px column and the photographs 250px across. Both take
+   the width they need on a phone instead. */
+@media (max-width:760px){
+  .gallery__intro,
+  .gallery__outro{ width:min(84vw,440px); }
+  .shot{ width:min(88vw,900px); aspect-ratio:5/4; }
+}
