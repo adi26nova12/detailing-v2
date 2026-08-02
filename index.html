@@ -10,7 +10,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap">
-<link rel="stylesheet" href="css/main.css">
+<!-- ?v= is a cache buster. python -m http.server sends no cache headers, so
+     Chrome serves stale css/js through an ordinary reload; bump this number
+     after editing either and the browser is forced to refetch. -->
+<link rel="stylesheet" href="css/main.css?v=6">
 </head>
 
 <body class="is-loading">
@@ -149,48 +152,98 @@
   </div>
 </section>
 
-<!-- ═══════════════ GALLERY ═══════════════
-     PLACEHOLDER: the five commissions below (cars, suburbs, treatments) are
-     template copy, not Studio X's real job history. Replace with real work
-     before this goes live. -->
-<section class="gallery" id="gallery">
-  <div class="gallery__track" id="galleryTrack">
-    <div class="gallery__intro">
-      <h2 class="h-lg">Selected<br>commissions.</h2>
-      <p class="lede">Melbourne's trusted destination for ceramic coating, paint protection film,
-         paint correction, window tinting and complete detailing — cutting-edge technology and
-         expert craftsmanship, on every car that comes through the bay.</p>
-    </div>
+<!-- ═══════════════ CUSTOMER WORK ═══════════════
+     A grid of plates — three up, two at tablet, one on a phone. Each wipes
+     open as it is reached, with its caption over the foot of the image;
+     the choreography is in Scenes.work.
 
-    <article class="shot" data-shot="0">
-      <canvas class="shot__plate"></canvas>
-      <div class="shot__mask"></div>
-      <div class="shot__meta"><span>01 / Toorak</span><h3>M8 Competition</h3><p>Stage 3 correction · 9H ceramic</p></div>
-    </article>
-    <article class="shot" data-shot="1">
-      <canvas class="shot__plate"></canvas>
-      <div class="shot__mask"></div>
-      <div class="shot__meta"><span>02 / Brighton</span><h3>992 Turbo S</h3><p>Full body PPF · gloss</p></div>
-    </article>
-    <article class="shot" data-shot="2">
-      <canvas class="shot__plate"></canvas>
-      <div class="shot__mask"></div>
-      <div class="shot__meta"><span>03 / Kew</span><h3>Continental GT</h3><p>Leather restoration · coating</p></div>
-    </article>
-    <article class="shot" data-shot="3">
-      <canvas class="shot__plate"></canvas>
-      <div class="shot__mask"></div>
-      <div class="shot__meta"><span>04 / South Yarra</span><h3>AMG GT Black Series</h3><p>Track prep · wheel-off detail</p></div>
-    </article>
-    <article class="shot" data-shot="4">
-      <canvas class="shot__plate"></canvas>
-      <div class="shot__mask"></div>
-      <div class="shot__meta"><span>05 / Albert Park</span><h3>Huracán STO</h3><p>Paint correction · engine bay</p></div>
-    </article>
-    <div class="gallery__outro">
-      <p class="lede">The rest live in the archive.</p>
-      <a class="link-arrow" href="#book" data-magnetic>Request the archive</a>
-    </div>
+     PHOTOS — drop files into assets/customers/ named 01.jpg … 06.jpg and they
+     appear on their own; no code change is needed. Each frame loads its own
+     file as the reader approaches it, so a file that is not there yet leaves
+     the placeholder frame standing rather than a broken image. To use .webp
+     or .png instead, change the extension on that frame's data-src. To add a
+     seventh car, copy one <figure> and bump the numbers.
+
+     PLACEHOLDER: the captions below are template copy, not real jobs — put
+     the real vehicle, suburb and treatment in before this goes live, and only
+     use a customer's car with their say-so. -->
+<section class="work" id="gallery">
+  <div class="work__head">
+    <span class="eyebrow">Selected work</span>
+    <h2 class="h-lg">Cars we&rsquo;ve<br>had in.</h2>
+    <p class="lede">Every car that comes through the bay, photographed as it left.</p>
+  </div>
+
+  <div class="work__grid">
+    <figure class="work__item">
+      <div class="work__frame" data-src="assets/customers/01.jpg">
+        <span class="work__wait"><b>01</b><i>Photograph to come</i></span>
+      </div>
+      <figcaption class="work__meta">
+        <span>01 / Suburb</span>
+        <h3>Vehicle</h3>
+        <p>Treatment &middot; treatment</p>
+      </figcaption>
+    </figure>
+
+    <figure class="work__item">
+      <div class="work__frame" data-src="assets/customers/02.jpg">
+        <span class="work__wait"><b>02</b><i>Photograph to come</i></span>
+      </div>
+      <figcaption class="work__meta">
+        <span>02 / Suburb</span>
+        <h3>Vehicle</h3>
+        <p>Treatment &middot; treatment</p>
+      </figcaption>
+    </figure>
+
+    <figure class="work__item">
+      <div class="work__frame" data-src="assets/customers/03.jpg">
+        <span class="work__wait"><b>03</b><i>Photograph to come</i></span>
+      </div>
+      <figcaption class="work__meta">
+        <span>03 / Suburb</span>
+        <h3>Vehicle</h3>
+        <p>Treatment &middot; treatment</p>
+      </figcaption>
+    </figure>
+
+    <figure class="work__item">
+      <div class="work__frame" data-src="assets/customers/04.jpg">
+        <span class="work__wait"><b>04</b><i>Photograph to come</i></span>
+      </div>
+      <figcaption class="work__meta">
+        <span>04 / Suburb</span>
+        <h3>Vehicle</h3>
+        <p>Treatment &middot; treatment</p>
+      </figcaption>
+    </figure>
+
+    <figure class="work__item">
+      <div class="work__frame" data-src="assets/customers/05.jpg">
+        <span class="work__wait"><b>05</b><i>Photograph to come</i></span>
+      </div>
+      <figcaption class="work__meta">
+        <span>05 / Suburb</span>
+        <h3>Vehicle</h3>
+        <p>Treatment &middot; treatment</p>
+      </figcaption>
+    </figure>
+    <figure class="work__item">
+      <div class="work__frame" data-src="assets/customers/06.jpg">
+        <span class="work__wait"><b>06</b><i>Photograph to come</i></span>
+      </div>
+      <figcaption class="work__meta">
+        <span>06 / Suburb</span>
+        <h3>Vehicle</h3>
+        <p>Treatment &middot; treatment</p>
+      </figcaption>
+    </figure>
+  </div>
+
+  <div class="work__outro">
+    <p class="lede">The rest live in the archive.</p>
+    <a class="link-arrow" href="#book" data-magnetic>Request the archive</a>
   </div>
 </section>
 
@@ -473,12 +526,12 @@
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.20/dist/lenis.min.js"></script>
 
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/sequence.js"></script>
-<script src="js/preloader.js"></script>
-<script src="js/scenes.js"></script>
-<script src="js/booking.js"></script>
-<script src="js/main.js"></script>
+<script src="js/config.js?v=6"></script>
+<script src="js/utils.js?v=6"></script>
+<script src="js/sequence.js?v=6"></script>
+<script src="js/preloader.js?v=6"></script>
+<script src="js/scenes.js?v=6"></script>
+<script src="js/booking.js?v=6"></script>
+<script src="js/main.js?v=6"></script>
 </body>
 </html>

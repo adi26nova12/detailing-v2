@@ -666,70 +666,106 @@
   };
 
   /* ══════════════════════════════════════════════════════════════════════
-     SCENE 7 · horizontal gallery
+     SCENE 7 · customer work
+
+     A grid of plates that arrive as the reader reaches them.
+
+     The arrival is two moves against each other: the plate wipes open from
+     the top while the photograph inside it settles back from slightly
+     enlarged. The counter-move is the whole trick — a wipe on its own reads
+     as a curtain going up, but a wipe over an image that is still moving
+     reads as the photograph arriving. The caption follows a beat later, so
+     the eye lands on the picture first and the words second.
+
+     Nothing here moves the grid cell. The 1px gaps are the grid's own
+     background showing through, and a cell that slides tears them open — so
+     the movement all happens inside the frame, which is also why the plates
+     can stagger without the grid appearing to come apart.
+
+     Each frame fetches its own file as the reader comes up on it, so nothing
+     is requested for a section that may never be reached, and a file that has
+     not been added yet leaves its placeholder frame standing — `new Image()`
+     fails quietly where an <img src> in the markup would leave a broken image
+     on the page.
      ═══════════════════════════════════════════════════════════════════ */
-  Scenes.gallery = function (seq, lenis) {
-    const track = document.getElementById('galleryTrack');
-    const shots = Array.from(track.querySelectorAll('.shot'));
-    const plates = shots.map(function (shot, i) {
-      const p = new w.APEX_Plate(shot.querySelector('.shot__plate'), seq);
-      p.set(C.stills.gallery[i % C.stills.gallery.length], { zoom: 1.22 });
-      return p;
-    });
+  Scenes.work = function () {
+    const items = Array.from(document.querySelectorAll('.work__item'));
+    if (!items.length) return;
+    const reduce = U.reducedMotion;
 
-    function distance() { return Math.max(0, track.scrollWidth - w.innerWidth); }
-
-    const tween = g.to(track, {
-      x: function () { return -distance(); },
-      ease: 'none',
-      scrollTrigger: {
-        trigger: '#gallery',
-        start: 'top top',
-        end: function () { return '+=' + distance(); },
-        pin: true, scrub: 0.7, invalidateOnRefresh: true, anticipatePin: 1
-      }
-    });
-
-    /* Each plate counter-parallaxes inside its frame, and the mask peels back
-       as the shot reaches the centre of the viewport. */
-    shots.forEach(function (shot, i) {
-      const plate = plates[i];
-      ST.create({
-        trigger: shot, containerAnimation: tween,
-        start: 'left right', end: 'right left', scrub: true,
-        onUpdate: function (self) {
-          const centred = 1 - Math.abs(self.progress - 0.5) * 2;
-          plate.set(plate.index, { zoom: U.lerp(1.34, 1.12, centred), ox: U.lerp(0.22, 0.66, self.progress) });
-          g.set(shot.querySelector('.shot__mask'), { opacity: U.lerp(1, 0.42, centred) });
-          g.set(shot.querySelector('.shot__meta'), { y: U.lerp(34, 0, centred), opacity: U.lerp(0.15, 1, centred) });
-        }
-      });
-
-      g.fromTo(shot, { clipPath: 'inset(0% 0% 0% 100%)' }, {
-        clipPath: 'inset(0% 0% 0% 0%)', ease: E.glide,
-        scrollTrigger: { trigger: shot, containerAnimation: tween, start: 'left 92%', end: 'left 46%', scrub: true }
-      });
-    });
-
-    /* The section reads as horizontal, so a horizontal drag or trackpad swipe
-       should move it. Observer converts that gesture into vertical scroll,
-       which is what actually drives the pin. */
-    if (w.Observer && !U.reducedMotion) {
-      w.Observer.create({
-        target: '#gallery',
-        type: 'pointer,touch',
-        dragMinimum: 6,
-        onDragStart: function () { document.body.style.userSelect = 'none'; },
-        onDragEnd: function () { document.body.style.userSelect = ''; },
-        onChangeX: function (self) {
-          const to = w.scrollY - self.deltaX * 1.35;
-          if (lenis) lenis.scrollTo(to, { immediate: true });
-          else w.scrollTo(0, to);
-        }
+    /* The photograph settles the moment it lands rather than on arrival: it
+       is fetched early and usually beats the wipe, but not always, and tying
+       the two together would make a slow file stall the whole plate. */
+    function settle(img, item) {
+      if (reduce) return;
+      g.fromTo(img, { scale: 1.14 }, { scale: 1, duration: 1.7, ease: E.mass });
+      // and then drifts inside the frame for as long as the frame is on screen
+      g.fromTo(img, { yPercent: -4.5 }, {
+        yPercent: 4.5, ease: 'none',
+        scrollTrigger: { trigger: item, start: 'top bottom', end: 'bottom top', scrub: true }
       });
     }
 
-    w.addEventListener('resize', function () { plates.forEach(function (p) { p.resize(); }); });
+    items.forEach(function (item) {
+      const frame = item.querySelector('.work__frame');
+      if (!frame) return;
+      const src = frame.getAttribute('data-src');
+      if (!src) return;
+
+      ST.create({
+        trigger: item, start: 'top bottom+=70%', once: true,
+        onEnter: function () {
+          const img = new Image();
+          img.decoding = 'async';
+          img.alt = '';
+          img.onload = function () {
+            frame.insertBefore(img, frame.firstChild);
+            frame.classList.add('is-loaded');
+            settle(img, item);
+          };
+          img.src = src;
+        }
+      });
+    });
+
+    if (reduce) return;
+
+    // resting state, set here rather than in the CSS so the section still
+    // reads if this scene never runs
+    items.forEach(function (item) {
+      g.set(item.querySelector('.work__frame'), { clipPath: 'inset(0% 0% 100% 0%)' });
+      const meta = item.querySelector('.work__meta');
+      if (meta) g.set(Array.from(meta.children), { y: 26, opacity: 0 });
+    });
+
+    /* Batched rather than a trigger per plate: a row that comes into view
+       together should stagger across the row instead of landing on one frame.
+       ScrollTrigger.batch groups whatever crosses the line in the same beat,
+       so the stagger follows what the reader actually sees rather than the
+       document order. */
+    ST.batch(items, {
+      start: 'top 88%',
+      once: true,
+      onEnter: function (batch) {
+        batch.forEach(function (item, i) {
+          const d = i * 0.12;
+          const frame = item.querySelector('.work__frame');
+          const meta  = item.querySelector('.work__meta');
+
+          g.to(frame, {
+            clipPath: 'inset(0% 0% 0% 0%)',
+            duration: 1.25, ease: E.glide, delay: d
+          });
+
+          if (meta) {
+            g.to(Array.from(meta.children), {
+              y: 0, opacity: 1, duration: 1, ease: E.mass,
+              stagger: 0.07, delay: d + 0.26, clearProps: 'transform'
+            });
+          }
+        });
+      }
+    });
   };
 
   /* ══════════════════════════════════════════════════════════════════════
@@ -971,13 +1007,13 @@
        stage — and this heading with it — is still transparent then. `top top`
        is the moment the stage pins and begins to dissolve up. */
     headReveal('.services__head h2', '#services', 'top top');
-    headReveal('.gallery__intro h2', '#gallery',  'top 74%');
+    headReveal('.work__head h2',     '#gallery',  'top 74%');
     headReveal('.voices__head h2',   '#voices',   'top 76%');
     headReveal('.menu__head h2',     '#menu',     'top 76%');
 
-    copyReveal('.gallery__intro .lede', '#gallery', 'top 74%', 0.22);
+    copyReveal('.work__head .lede',     '#gallery', 'top 74%', 0.22);
     copyReveal('.menu__head .lede',     '#menu',    'top 76%', 0.22);
-    copyReveal('.gallery__outro .lede', '#gallery', 'top 40%', 0);
+    copyReveal('.work__outro .lede',    '.work__outro', 'top 88%', 0);
 
     // the eyebrow leads the heading in, as a rule drawn left to right
     const eyebrow = document.querySelector('.menu__head .eyebrow');
@@ -1039,7 +1075,7 @@
     buildEases();
     const heroPlate = Scenes.hero(seq);
     Scenes.services(turnSeq || seq, holoSeq);
-    Scenes.gallery(seq, lenis);
+    Scenes.work();
     Scenes.voices();
     Scenes.stats();
     Scenes.menu();
