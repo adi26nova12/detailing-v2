@@ -34,15 +34,21 @@
 </div>
 
 <!-- ─────────────────────────────  CHROME  ──────────────────────────────── -->
+<!-- Sits under the nav and over the page: content dims as it passes beneath,
+     so the nav stays legible without anything having to be hidden. Outside
+     <header> on purpose — the nav is a difference-blend layer, and a scrim
+     inside it would be blended along with it. -->
+<div class="nav-veil" aria-hidden="true"></div>
+
 <header class="nav" id="nav">
   <a class="nav__brand" href="#hero">
     <span class="nav__mark">STUDIO X</span>
     <span class="nav__sub">Detailing — Melbourne</span>
   </a>
   <nav class="nav__links">
-    <a href="#services">Services</a>
-    <a href="#gallery">Work</a>
-    <a href="#menu">Consult</a>
+    <a href="#services" data-swap="Services"><span>Services</span></a>
+    <a href="#gallery" data-swap="Work"><span>Work</span></a>
+    <a href="#menu" data-swap="Consult"><span>Consult</span></a>
     <button class="nav__cta" type="button" data-book data-magnetic>Book</button>
   </nav>
 </header>

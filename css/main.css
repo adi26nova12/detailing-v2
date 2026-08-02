@@ -112,6 +112,24 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   padding:clamp(18px,2.4vw,34px) var(--edge);
   mix-blend-mode:difference;
 }
+/* Difference blending carries the nav over artwork, but it cannot separate
+   white type from white type — every heading, card title and quote on this
+   page scrolls straight through the same corner. This veil settles that for
+   all of them at once: content fades out as it reaches the top edge, so the
+   nav never has to hide and never collides. Black on black, so it is only
+   visible when there is something underneath to dim. */
+/* Tall enough that the solid part of the ramp clears the nav's own box at
+   every viewport — the nav bottoms out around 72–110px depending on how its
+   padding clamps — and the fade happens below it. */
+.nav-veil{
+  position:fixed; z-index:590; top:0; left:0; right:0;
+  height:clamp(180px,24vh,250px); pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(5,3,4,.97) 0%, rgba(5,3,4,.95) 52%, rgba(5,3,4,.72) 72%,
+    rgba(5,3,4,.34) 87%, rgba(5,3,4,0) 100%);
+}
+body.is-loading .nav-veil{ opacity:0; }
+
 .nav__mark{
   display:block; font-size:1.02rem; letter-spacing:.42em;
   color:var(--white); font-weight:500;
@@ -127,6 +145,23 @@ h1,h2,h3{ font-weight:400; letter-spacing:-.03em; line-height:.92; color:var(--w
   transition:color .4s var(--e-out);
 }
 .nav__links a:hover{ color:var(--white); }
+/* The label leaves upward and its copy arrives from below, both inside a box
+   the height of one line — the swap reads as one movement rather than a
+   colour change. `data-swap` carries the duplicate so the markup says the
+   word once. */
+.nav__links a:not(.nav__cta){
+  position:relative; display:inline-block; overflow:hidden; line-height:1.2;
+}
+.nav__links a:not(.nav__cta) > span{
+  display:block; transition:transform .55s var(--e-out);
+}
+.nav__links a:not(.nav__cta)::after{
+  content:attr(data-swap); position:absolute; left:0; top:0;
+  color:var(--white); transform:translateY(105%);
+  transition:transform .55s var(--e-out);
+}
+.nav__links a:not(.nav__cta):hover > span{ transform:translateY(-105%); }
+.nav__links a:not(.nav__cta):hover::after{ transform:translateY(0); }
 /* a <button>, because it opens the booking dialog rather than going anywhere —
    so it has to be stripped back to the anchor it used to look like */
 .nav__cta{
@@ -209,9 +244,12 @@ body.is-loading .prog{ opacity:0; }
 .services{ height:600vh; position:relative; margin-top:-200vh; }
 .services__stage{ position:sticky; top:0; height:100vh; overflow:hidden; }
 .services__viewport{ position:absolute; inset:0; }
+/* will-change lists transform only: APEX.paint.filter is empty, so no filter
+   is ever applied to these, and promising one costs the compositor without
+   ever being used */
 .services__plate,.services__fx,.services__holo{
   position:absolute; inset:0; width:100%; height:100%;
-  transform-origin:50% 50%; will-change:transform,filter;
+  transform-origin:50% 50%; will-change:transform;
 }
 .services__fx{ mix-blend-mode:screen; pointer-events:none; }
 /* the scan sits over the car and under the surface effects */

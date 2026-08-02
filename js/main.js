@@ -146,7 +146,20 @@
         // the turntable is the next thing the visitor reaches, so it goes
         // ahead of its own scan layer
         if (turnSeq) turnSeq.stream();
-        if (holoSeq) holoSeq.stream();
+
+        /* The scan layer is not on screen until a service line lands, a fifth
+           of the way into the turntable — but streaming it here put its 240
+           frames in competition with the 240 the cut itself needs. A frame
+           that has not arrived is not skipped: `Sequence.get` falls back to
+           the nearest decoded neighbour, so a thin turn sequence makes the
+           car hold a pose and jump rather than turn. It waits until the
+           reader is a viewport out, which is runway enough. */
+        if (holoSeq) {
+          w.ScrollTrigger.create({
+            trigger: '#services', start: 'top bottom+=100%', once: true,
+            onEnter: function () { holoSeq.stream(); }
+          });
+        }
         w.ScrollTrigger.refresh();
       });
     }).catch(function (err) {

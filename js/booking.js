@@ -399,20 +399,60 @@
     paintChrome();
 
     if (w.gsap && !U.reducedMotion) {
-      w.gsap.fromTo(root.querySelector('.bk__dialog'),
-        { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' });
-      w.gsap.fromTo(root.querySelector('.bk__scrim'),
-        { opacity: 0 }, { opacity: 1, duration: 0.4 });
+      const g = w.gsap;
+      const dialog = root.querySelector('.bk__dialog');
+      const scrim  = root.querySelector('.bk__scrim');
+      g.killTweensOf([dialog, scrim]);
+
+      /* The dialog is uncovered rather than slid in: the panel holds its
+         final position and a clip opens down it, so the eye stays on the
+         content instead of tracking a moving box. The scrim leads by a beat
+         so the page is already receding when the panel arrives. */
+      g.fromTo(scrim, { opacity: 0 }, { opacity: 1, duration: 0.45, ease: 'power2.out' });
+      g.fromTo(dialog,
+        { y: 14, opacity: 0, clipPath: 'inset(12% 0% 12% 0%)' },
+        { y: 0, opacity: 1, clipPath: 'inset(0% 0% 0% 0%)', duration: 0.72, ease: 'expo.out' });
+
+      /* The chrome settles after the panel it sits in. clearProps matters:
+         the deck writes its own transforms on these later, and a leftover
+         inline y would fight the card turn. */
+      g.from([root.querySelector('.bk__bar'), root.querySelector('.bk__rail')], {
+        y: 16, opacity: 0, duration: 0.6, ease: 'power3.out',
+        stagger: 0.07, delay: 0.14, clearProps: 'all'
+      });
     }
     setTimeout(function () { root.querySelector('.bk__close').focus(); }, 60);
   }
 
+  /* Closing used to be a cut — `hidden` straight back on. Everything the
+     dialog does on the way in, it now undoes on the way out, a little faster,
+     because an exit that matches its entrance frame for frame reads as slow. */
+  let closing = false;
+
   function close() {
-    root.hidden = true;
-    d.body.classList.remove('is-modal');
-    if (w.APEX_APP && w.APEX_APP.lenis) w.APEX_APP.lenis.start();
-    if (lastFocus && lastFocus.focus) lastFocus.focus();
-    opener = null;
+    if (closing) return;
+
+    function finish() {
+      closing = false;
+      root.hidden = true;
+      d.body.classList.remove('is-modal');
+      if (w.APEX_APP && w.APEX_APP.lenis) w.APEX_APP.lenis.start();
+      if (lastFocus && lastFocus.focus) lastFocus.focus();
+      opener = null;
+    }
+
+    if (!w.gsap || U.reducedMotion) { finish(); return; }
+
+    const g = w.gsap;
+    const dialog = root.querySelector('.bk__dialog');
+    const scrim  = root.querySelector('.bk__scrim');
+    closing = true;
+    g.killTweensOf([dialog, scrim]);
+    g.to(dialog, {
+      y: 10, opacity: 0, clipPath: 'inset(8% 0% 8% 0%)',
+      duration: 0.34, ease: 'power2.in'
+    });
+    g.to(scrim, { opacity: 0, duration: 0.42, ease: 'power2.in', onComplete: finish });
   }
 
   /* ── wiring ────────────────────────────────────────────────────────── */

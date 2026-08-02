@@ -231,14 +231,40 @@
        lands on the car. The band is composited here, not baked, so it
        follows scroll and reverses. */
     let holoFrame = -1, holoScan = 0, holoAlpha = 0;
+    let holoKey = '', holoLive = true;
 
+    /* This was the most expensive thing in the section by a wide margin, for
+       a reason that is invisible in the output: the mask gradient clamps to
+       fully transparent at both ends, so every pixel outside the band is
+       erased the instant it is drawn. The old pass rasterised the whole frame
+       and then ran a full-canvas `destination-in` to throw about three
+       quarters of it away — twice the viewport in pixel work, every frame,
+       for a strip a fifth of it wide.
+
+       Only the band is touched now: the slice of the source image the band
+       can actually show is mapped back out of it and drawn on its own, and
+       the mask runs inside a clip of the same width so the composite is
+       bounded too. */
     function drawHolo() {
       if (!W || holoAlpha <= 0.002) {
-        if (holoEl.style.opacity !== '0') holoEl.style.opacity = '0';
+        if (holoLive) {
+          holoLive = false; holoKey = '';
+          holoEl.style.opacity = '0';
+          // an opacity:0 layer still costs a screen-blend composite every frame
+          holoEl.style.visibility = 'hidden';
+        }
         return;
       }
       const img = holoSeq && holoSeq.get(holoFrame);
       if (!img) return;
+
+      /* The loop runs whether or not the reader is scrolling, and none of
+         this changes unless one of these does — including the plate's
+         framing, which the overlay has to track or it slides off the car. */
+      const key = holoFrame + '|' + holoScan.toFixed(4) + '|' + holoAlpha.toFixed(3) +
+                  '|' + W + '|' + H + '|' + plate.opt.zoom + '|' + plate.opt.ox +
+                  '|' + plate.opt.oy;
+      if (key === holoKey) return;
 
       const d = U.dpr();
       hctx.setTransform(d, 0, 0, d, 0, 0);
@@ -247,12 +273,26 @@
       // identical fit to the plate, or the overlay slides off the car
       const r = U.coverRect(W, H, img.naturalWidth, img.naturalHeight,
                             plate.opt.ox, plate.opt.oy, plate.opt.zoom, plate.opt.fit);
-      hctx.drawImage(img, r.x, r.y, r.w, r.h);
 
       /* The scanner travels across the image, not the canvas — with
          contain-fit the canvas has black margins the beam must not cross. */
       const x = r.x + holoScan * r.w;
       const band = Math.max(70, r.w * 0.19);
+      const bx0 = Math.max(r.x, x - band);
+      const bx1 = Math.min(r.x + r.w, x + band * 0.30);
+      const bw = bx1 - bx0;
+      if (bw <= 0) { holoKey = ''; holoEl.style.opacity = '0'; return; }
+
+      hctx.save();
+      hctx.beginPath();
+      hctx.rect(bx0, r.y, bw, r.h);
+      hctx.clip();
+
+      const sx = (bx0 - r.x) / r.w * img.naturalWidth;
+      const sw = bw / r.w * img.naturalWidth;
+      hctx.drawImage(img, sx, 0, sw, img.naturalHeight, bx0, r.y, bw, r.h);
+
+      // the gradient keeps its full geometry; only the area it covers shrinks
       const grad = hctx.createLinearGradient(x - band, 0, x + band * 0.30, 0);
       grad.addColorStop(0.00, 'rgba(0,0,0,0)');
       grad.addColorStop(0.55, 'rgba(0,0,0,0.55)');
@@ -260,8 +300,9 @@
       grad.addColorStop(1.00, 'rgba(0,0,0,0)');
       hctx.globalCompositeOperation = 'destination-in';
       hctx.fillStyle = grad;
-      hctx.fillRect(0, 0, W, H);
+      hctx.fillRect(bx0, r.y, bw, r.h);
       hctx.globalCompositeOperation = 'source-over';
+      hctx.restore();
 
       const edge = hctx.createLinearGradient(x - 22, 0, x + 8, 0);
       edge.addColorStop(0, 'rgba(230,57,77,0)');
@@ -270,7 +311,9 @@
       hctx.fillStyle = edge;
       hctx.fillRect(x - 22, r.y, 30, r.h);
 
+      if (!holoLive) { holoLive = true; holoEl.style.visibility = ''; }
       holoEl.style.opacity = holoAlpha.toFixed(3);
+      holoKey = key;
     }
 
     /* ── effects ─────────────────────────────────────────────────────────
@@ -428,10 +471,34 @@
         'translate3d(' + x.toFixed(2) + 'px,' + y.toFixed(2) + 'px,0)';
     }
 
+    /* Between one service landing and the next nothing has any weight, and
+       this canvas spent those stretches clearing a full viewport every frame
+       and handing the compositor a transparent screen-blend layer to mix.
+       It is cleared once on the way out and then left alone. */
+    let fxDirty = false, fxLive = true;
+
     function draw(t) {
       if (!live || !W) return;
       if (!U.reducedMotion) breathe(t);
       drawHolo();
+
+      let any = false;
+      for (let i = 0; i < N; i++) {
+        if (effectWeightOf(i) >= 0.01) { any = true; break; }
+      }
+
+      if (!any) {
+        if (fxDirty) {
+          const d0 = U.dpr();
+          ctx.setTransform(d0, 0, 0, d0, 0, 0);
+          ctx.clearRect(0, 0, W, H);
+          fxDirty = false;
+        }
+        if (fxLive) { fxLive = false; fx.style.visibility = 'hidden'; }
+        return;
+      }
+      if (!fxLive) { fxLive = true; fx.style.visibility = ''; }
+
       measure();
       const d = U.dpr();
       ctx.setTransform(d, 0, 0, d, 0, 0);
@@ -448,6 +515,7 @@
         f(t, effectLocalOf(i));
       }
       ctx.globalAlpha = 1;
+      fxDirty = true;
     }
 
     /* The camera move. Each line owns a framing; the plate eases from one to
@@ -949,13 +1017,22 @@
      ═══════════════════════════════════════════════════════════════════ */
   Scenes.chrome = function () {
     const bar = document.querySelector('.prog i');
-    if (!bar) return;
-    const setX = g.quickSetter(bar, 'scaleX');
-    setX(0);
-    ST.create({
-      start: 0, end: 'max',
-      onUpdate: function (self) { setX(self.progress); }
-    });
+    if (bar) {
+      const setX = g.quickSetter(bar, 'scaleX');
+      setX(0);
+      ST.create({
+        start: 0, end: 'max',
+        onUpdate: function (self) { setX(self.progress); }
+      });
+    }
+
+    /* Collision between the nav and the page's type is handled in CSS, by the
+       veil behind the nav — see `.nav-veil`. It was tried here first, hiding
+       whichever part of the nav a heading was passing through, and the
+       approach does not survive contact with this page: text is under that
+       corner for most of the document, so the brand spent more time hidden
+       than visible and strobed in the gaps between cards. Dimming what passes
+       underneath costs nothing and never takes the navigation away. */
   };
 
   Scenes.init = function (seq, lenis, turnSeq, holoSeq) {
